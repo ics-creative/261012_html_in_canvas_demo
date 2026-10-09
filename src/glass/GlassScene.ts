@@ -36,7 +36,6 @@ export async function createGlassScene(
     source.style.setProperty("--page-height", `${height}px`);
     // CSS変形は描画元を変えず、元HTMLの入力・選択領域だけを画面と揃える。
     source.style.transform = `scale(${1 / devicePixelRatio})`;
-    canvas.updateElementGeometry(source);
   };
 
   // HTMLの寸法を確定してから初回転送し、低解像度の画像で初期化しない。
@@ -112,6 +111,8 @@ export async function createGlassScene(
     host,
     () => {
       resize();
+      // Three.jsがHTMLテクスチャを登録してから、Canvasの操作領域を更新する。
+      canvas.updateElementGeometry(source);
       cropped.setSize(
         (size.value.x + padding * 2) * devicePixelRatio,
         (size.value.y + padding * 2) * devicePixelRatio,
