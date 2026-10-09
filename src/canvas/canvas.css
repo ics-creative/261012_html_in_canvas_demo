@@ -1,0 +1,23 @@
+.canvas-stage {
+  background: var(--canvas-background);
+
+  .canvas-host {
+    touch-action: none;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+}
+
+/* キャプチャ元は画面内でレイアウトし、表示だけを切り取る。 */
+.capture-staging {
+  position: fixed;
+  inset: 0 auto auto 0;
+  width: 2px;
+  height: 2px;
+  overflow: hidden;
+  clip-path: inset(0);
+  pointer-events: none;
+}

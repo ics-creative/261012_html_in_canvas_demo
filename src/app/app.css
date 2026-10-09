@@ -1,0 +1,315 @@
+/* フォームとフォーカスの既定動作を保ち、共通レイアウトを通常のCSSで定義する。 */
+:root {
+  /* 使用先の発表資料と同じ紫・白・グレーを、デモ内の操作UIでも共有する。 */
+  --accent: #3223b3;
+  --accent-soft: #e0ddfa;
+  --paper: #fff;
+  --ink: #1f2937;
+  --muted: #687080;
+  --rule: #d7d5e4;
+  --background: #eff2f5;
+  --canvas-background: #101114;
+  font-family: sans-serif;
+  color: var(--ink);
+  background: var(--background);
+  color-scheme: light;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  /* 減衰するスプリング。現在地のピルと押したボタンの戻りに使う。 */
+  --navigation-spring: linear(
+    0,
+    0.08 4%,
+    0.28 8%,
+    0.52 12%,
+    0.76 16%,
+    0.94 20%,
+    1.04 24%,
+    1.08 32%,
+    1.04 44%,
+    1 56%,
+    0.98 68%,
+    1 88%,
+    1
+  );
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+h1,
+h2,
+h3,
+p,
+figure {
+  margin: 0;
+}
+
+h2 {
+  font-size: var(--heading-size, 128px);
+  line-height: var(--heading-height, 1);
+}
+
+button,
+input,
+textarea {
+  color: inherit;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: normal;
+  line-height: inherit;
+}
+
+/* 操作ラベルだけを選択対象から外し、本文と入力欄の選択は保つ。 */
+button,
+.header a,
+.source-links a {
+  user-select: none;
+}
+
+canvas {
+  display: block;
+}
+
+/* キャプチャするHTML誌面は、各デモで共通の原寸を使う。 */
+:where(.html-page) {
+  position: relative;
+  width: 760px;
+  height: 480px;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: var(--page-link-gap, 24px);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+
+    &:hover,
+    &.current {
+      border-color: var(--page-link-color, currentColor);
+    }
+  }
+}
+
+#root {
+  /* ヘッダーの実寸を引いた残りを描画領域にし、個別の高さ計算を持たない。 */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100dvh;
+}
+
+.header {
+  z-index: 2;
+  min-height: 64px;
+  gap: 24px;
+  padding-inline: 32px;
+  background: var(--paper);
+
+  h1 {
+    font-size: 16px;
+    white-space: nowrap;
+  }
+
+  nav {
+    position: relative;
+    min-width: 0;
+    isolation: isolate;
+    anchor-scope: all;
+    scroll-target-group: auto;
+    display: flex;
+    gap: 4px;
+    padding: 8px 40px;
+    overflow-x: auto;
+    /* 横スクロールでも、端のリンクにスプリング用の余白を残す。 */
+    scroll-padding-inline: 40px;
+
+    /* 現在のリンクを基準に、ピルの座標と大きさをCSSだけで追従させる。 */
+    &::after {
+      content: "";
+      /* navのスクロール領域に切られず、スプリングの行き過ぎまで描く。 */
+      position: fixed;
+      z-index: -1;
+      position-anchor: var(--current-demo);
+      top: anchor(top);
+      left: anchor(left);
+      width: anchor-size(width);
+      height: anchor-size(height);
+      border-radius: 24px;
+      background: var(--accent);
+      pointer-events: none;
+      transition:
+        left 0.8s var(--navigation-spring),
+        top 0.8s var(--navigation-spring),
+        width 0.8s var(--navigation-spring),
+        height 0.8s var(--navigation-spring);
+    }
+
+    /* アンカー名は固定し、現在地に応じて背景の参照先だけを交換する。 */
+    &:has(a[href$="#/laser"]:target-current) {
+      --current-demo: --demo-laser;
+    }
+
+    &:has(a[href$="#/cloth"]:target-current) {
+      --current-demo: --demo-cloth;
+    }
+
+    &:has(a[href$="#/book"]:target-current) {
+      --current-demo: --demo-book;
+    }
+
+    &:has(a[href$="#/transition"]:target-current) {
+      --current-demo: --demo-transition;
+    }
+
+    &:has(a[href$="#/crt"]:target-current) {
+      --current-demo: --demo-crt;
+    }
+
+    &:has(a[href$="#/crt-3d"]:target-current) {
+      --current-demo: --demo-crt-3d;
+    }
+
+    &:has(a[href$="#/distortion"]:target-current) {
+      --current-demo: --demo-distortion;
+    }
+
+    &:has(a[href$="#/glass"]:target-current) {
+      --current-demo: --demo-glass;
+    }
+  }
+
+  a {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 12px 16px;
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s;
+
+    span {
+      color: var(--muted);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    &:hover {
+      color: var(--accent);
+    }
+
+    /* 描画領域のIDは表示中のデモを示し、準備中の画面は選ばれない。 */
+    &:target-current {
+      color: var(--paper);
+
+      span {
+        color: inherit;
+      }
+    }
+  }
+
+  @media (width <= 1000px) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px 24px 4px;
+  }
+}
+
+.demo-viewport {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.demo-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+}
+
+.experiment {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+
+  > section {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+/* 同じ配置になる見出し行・描画先・前後操作を共有する。 */
+header,
+footer,
+.book-plate figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.canvas-host,
+.book-host,
+.transition-host,
+.distortion-host,
+.crt-screen > div,
+.crt-input,
+.book-host [drawable] {
+  position: absolute;
+  inset: 0;
+}
+
+.distortion-document {
+  position: absolute;
+  inset: 50% auto auto 50%;
+}
+
+.page-navigation {
+  position: absolute;
+  display: flex;
+
+  button {
+    display: grid;
+    place-items: center;
+    width: var(--navigation-size, 64px);
+    height: var(--navigation-size, 64px);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: var(--paper);
+    background: #0008;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.4;
+    }
+
+    &:hover:not(:disabled) {
+      background: #000b;
+    }
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}

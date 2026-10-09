@@ -1,0 +1,232 @@
+.crt-stage {
+  display: grid;
+  background: var(--canvas-background);
+
+  &:has(.crt-toggle input:not(:checked)) {
+    .crt-glass {
+      display: none;
+    }
+  }
+}
+
+.crt-toggle {
+  position: absolute;
+  z-index: 4;
+  inset: 40px 52px auto auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+
+  input {
+    position: relative;
+    width: 48px;
+    height: 28px;
+    margin: 0;
+    border: 2px solid var(--muted);
+    border-radius: 16px;
+    appearance: none;
+    background: var(--background);
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      border-color 0.2s;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 4px auto auto 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition:
+        translate 0.2s,
+        background-color 0.2s;
+    }
+
+    &:checked {
+      border-color: var(--accent);
+      background: var(--accent);
+
+      &::before {
+        translate: 20px;
+        background: var(--paper);
+      }
+    }
+  }
+
+  @media (width <= 700px) {
+    inset: 24px 24px auto auto;
+  }
+}
+
+.crt-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--paper);
+
+  .crt-input {
+    width: 100%;
+    height: 100%;
+  }
+
+  .crt-output {
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .crt-glass {
+    z-index: 3;
+    pointer-events: none;
+    /* 中央を暗くせず、フィルターに重ねて縁のガラスの陰影を残す。 */
+    background:
+      repeating-linear-gradient(0deg, #0001 0 2px, transparent 2px 4px),
+      radial-gradient(ellipse at center, transparent 64%, #0004);
+    box-shadow: inset 0 0 28px #0004;
+  }
+}
+
+.crt-form {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 24px;
+  width: 100%;
+  height: 100%;
+  padding: 40px 52px;
+  color: var(--ink);
+  background: var(--paper);
+  color-scheme: light;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+
+  h2 {
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--ink);
+
+    @media (width <= 1000px) {
+      font-size: 64px;
+    }
+  }
+
+  .crt-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 8px 0 12px;
+    border: 0;
+    border-bottom: 2px solid var(--ink);
+    border-radius: 0;
+    background: var(--paper);
+    caret-color: var(--accent);
+    font-size: 24px;
+
+    &::placeholder {
+      color: var(--muted);
+      opacity: 1;
+    }
+
+    &::selection {
+      color: var(--paper);
+      background: var(--accent);
+    }
+  }
+
+  .crt-message {
+    min-height: 0;
+  }
+
+  textarea {
+    flex: 1;
+    min-height: 0;
+    resize: none;
+  }
+
+  .crt-submit {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 56px;
+    min-height: 56px;
+    padding: 12px 20px;
+    border: 0;
+    border-radius: 0;
+    color: var(--paper);
+    background: var(--accent);
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1.2;
+
+    span {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    &:hover {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+  }
+
+  output {
+    font-size: 14px;
+  }
+
+  @media (width <= 700px) {
+    padding: 32px 24px;
+    /* 狭い画面ではスイッチの下へ見出しを置き、重なりを防ぐ。 */
+    padding-top: 80px;
+
+    h2 {
+      font-size: 48px;
+      padding-bottom: 24px;
+    }
+
+    .crt-fields {
+      gap: 16px;
+    }
+
+    input,
+    textarea {
+      font-size: 20px;
+    }
+
+    .crt-submit {
+      align-items: start;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+}

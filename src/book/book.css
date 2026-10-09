@@ -1,0 +1,149 @@
+.book-stage {
+  background: var(--canvas-background);
+
+  .book-host {
+    touch-action: none;
+
+    [drawable] {
+      transform-origin: 0 0;
+    }
+  }
+
+  .book-navigation {
+    --navigation-size: 48px;
+    z-index: 3;
+    inset: auto auto 24px 50%;
+    gap: 12px;
+    translate: -50% 0;
+  }
+}
+
+/* HTMLTextureが測る外枠を1040×1440にし、520×720の組版を2倍で描画する。 */
+.book-page {
+  --heading-size: 48px;
+  --heading-height: 1.2;
+  --page-rule: #c1bcaf;
+  --page-gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--page-gap);
+  width: 520px;
+  height: 720px;
+  padding: 40px 40px 28px;
+  zoom: 2;
+  color: #20211e;
+  background: #f1ecdf;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color-scheme: light;
+  cursor: text;
+
+  header,
+  footer {
+    font-size: 12px;
+  }
+
+  header {
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--page-rule);
+  }
+
+  footer {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 2px solid var(--page-rule);
+  }
+
+  img {
+    flex-shrink: 0;
+    width: 100%;
+    height: var(--image-height, 96px);
+    object-fit: cover;
+    cursor: default;
+  }
+
+  .book-copy {
+    display: grid;
+    gap: 12px;
+    font-family: Georgia, "Times New Roman", serif;
+    line-height: 1.5;
+  }
+}
+
+.book-title {
+  h2 {
+    white-space: pre-line;
+    padding-top: 24px;
+    line-height: 1.4;
+  }
+
+  .book-contents {
+    padding-top: 24px;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-top: 2px solid var(--page-rule);
+      font-size: 14px;
+    }
+  }
+}
+
+.book-plate {
+  --image-height: 660px;
+  gap: 0;
+  padding: 0;
+
+  figcaption {
+    height: 60px;
+    padding-inline: 32px;
+    font-size: 12px;
+  }
+}
+
+.book-essay,
+.book-introduction,
+.book-detail {
+  --heading-size: 32px;
+}
+
+.book-essay {
+  --page-gap: 12px;
+
+  h3 {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+}
+
+.book-introduction {
+  --image-height: 128px;
+}
+
+.book-detail {
+  --image-height: 256px;
+}
+
+.book-index {
+  --image-height: 112px;
+  --page-gap: 12px;
+
+  figure {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    align-items: end;
+    gap: 24px;
+
+    figcaption {
+      display: grid;
+      gap: 16px;
+      font-size: 20px;
+
+      span {
+        font-size: 12px;
+      }
+    }
+  }
+}

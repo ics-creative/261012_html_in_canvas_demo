@@ -1,0 +1,76 @@
+.distortion-stage {
+  background: var(--canvas-background);
+  color: var(--paper);
+
+  .distortion-document.is-transitioning .distortion-type {
+    visibility: hidden;
+  }
+}
+
+.distortion-art,
+.distortion-type {
+  inline-size: 1200px;
+  block-size: 720px;
+}
+
+.distortion-art {
+  position: relative;
+  background: var(--canvas-background);
+
+  > img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, #0006, #0003 72%);
+  }
+}
+
+.distortion-type {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 64px 64px 120px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+
+  > header {
+    justify-content: flex-end;
+  }
+
+  .distortion-copy {
+    align-self: center;
+  }
+
+  p {
+    max-inline-size: 560px;
+    margin: 32px 0 0;
+    font-size: 20px;
+    line-height: 1.8;
+    word-break: auto-phrase;
+    text-wrap: pretty;
+  }
+}
+
+.distortion-navigation {
+  inset: auto 32px 32px;
+  justify-content: space-between;
+
+  button {
+    /* 押して縮めた円を、離したときにスプリングで戻す。 */
+    transition:
+      background-color 0.2s,
+      scale 0.6s var(--navigation-spring);
+
+    &:active:not(:disabled) {
+      scale: 0.8;
+      transition-duration: 0.2s, 0s;
+    }
+  }
+}

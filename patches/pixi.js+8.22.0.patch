@@ -1,0 +1,242 @@
+diff --git a/node_modules/pixi.js/lib/rendering/batcher/gpu/getTextureBatchBindGroup.js b/node_modules/pixi.js/lib/rendering/batcher/gpu/getTextureBatchBindGroup.js
+index c876250..a57919a 100644
+--- a/node_modules/pixi.js/lib/rendering/batcher/gpu/getTextureBatchBindGroup.js
++++ b/node_modules/pixi.js/lib/rendering/batcher/gpu/getTextureBatchBindGroup.js
+@@ -4,17 +4,8 @@ var BindGroup = require('../../renderers/gpu/shader/BindGroup.js');
+ var Texture = require('../../renderers/shared/texture/Texture.js');
+ 
+ "use strict";
+-const cachedGroups = {};
++/** テクスチャ参照はglobal cacheで共有せず、各バッチで所有する。 */
+ function getTextureBatchBindGroup(textures, size, maxTextures) {
+-  let uid = 2166136261;
+-  for (let i = 0; i < size; i++) {
+-    uid ^= textures[i].uid;
+-    uid = Math.imul(uid, 16777619);
+-    uid >>>= 0;
+-  }
+-  return cachedGroups[uid] || generateTextureBatchBindGroup(textures, size, uid, maxTextures);
+-}
+-function generateTextureBatchBindGroup(textures, size, key, maxTextures) {
+   const bindGroupResources = {};
+   let bindIndex = 0;
+   for (let i = 0; i < maxTextures; i++) {
+@@ -22,9 +13,7 @@ function generateTextureBatchBindGroup(textures, size, key, maxTextures) {
+     bindGroupResources[bindIndex++] = texture.source;
+     bindGroupResources[bindIndex++] = texture.style;
+   }
+-  const bindGroup = new BindGroup.BindGroup(bindGroupResources);
+-  cachedGroups[key] = bindGroup;
+-  return bindGroup;
++  return new BindGroup.BindGroup(bindGroupResources);
+ }
+ 
+ exports.getTextureBatchBindGroup = getTextureBatchBindGroup;
+diff --git a/node_modules/pixi.js/lib/rendering/batcher/gpu/getTextureBatchBindGroup.mjs b/node_modules/pixi.js/lib/rendering/batcher/gpu/getTextureBatchBindGroup.mjs
+index 433fedc..21f409b 100644
+--- a/node_modules/pixi.js/lib/rendering/batcher/gpu/getTextureBatchBindGroup.mjs
++++ b/node_modules/pixi.js/lib/rendering/batcher/gpu/getTextureBatchBindGroup.mjs
+@@ -2,17 +2,8 @@ import { BindGroup } from '../../renderers/gpu/shader/BindGroup.mjs';
+ import { Texture } from '../../renderers/shared/texture/Texture.mjs';
+ 
+ "use strict";
+-const cachedGroups = {};
++/** テクスチャ参照はglobal cacheで共有せず、各バッチで所有する。 */
+ function getTextureBatchBindGroup(textures, size, maxTextures) {
+-  let uid = 2166136261;
+-  for (let i = 0; i < size; i++) {
+-    uid ^= textures[i].uid;
+-    uid = Math.imul(uid, 16777619);
+-    uid >>>= 0;
+-  }
+-  return cachedGroups[uid] || generateTextureBatchBindGroup(textures, size, uid, maxTextures);
+-}
+-function generateTextureBatchBindGroup(textures, size, key, maxTextures) {
+   const bindGroupResources = {};
+   let bindIndex = 0;
+   for (let i = 0; i < maxTextures; i++) {
+@@ -20,9 +11,7 @@ function generateTextureBatchBindGroup(textures, size, key, maxTextures) {
+     bindGroupResources[bindIndex++] = texture.source;
+     bindGroupResources[bindIndex++] = texture.style;
+   }
+-  const bindGroup = new BindGroup(bindGroupResources);
+-  cachedGroups[key] = bindGroup;
+-  return bindGroup;
++  return new BindGroup(bindGroupResources);
+ }
+ 
+ export { getTextureBatchBindGroup };
+diff --git a/node_modules/pixi.js/lib/rendering/batcher/shared/Batcher.js b/node_modules/pixi.js/lib/rendering/batcher/shared/Batcher.js
+index b3b6e81..557581c 100644
+--- a/node_modules/pixi.js/lib/rendering/batcher/shared/Batcher.js
++++ b/node_modules/pixi.js/lib/rendering/batcher/shared/Batcher.js
+@@ -26,6 +26,7 @@ class Batch {
+     this.canBundle = true;
+   }
+   destroy() {
++    this.bindGroup?.destroy();
+     this.textures = null;
+     this.gpuBindGroup = null;
+     this.bindGroup = null;
+@@ -50,6 +51,11 @@ function getBatchFromPool() {
+   return batchPoolIndex > 0 ? batchPool[--batchPoolIndex] : new Batch();
+ }
+ function returnBatchToPool(batch) {
++  // 再利用のプールへ戻す前に、シェーダーの購読とsourceの参照を外す。
++  batch.bindGroup?.destroy();
++  batch.bindGroup = null;
++  batch.gpuBindGroup = null;
++  batch.textures.clear();
+   batch.elements = null;
+   batchPool[batchPoolIndex++] = batch;
+ }
+diff --git a/node_modules/pixi.js/lib/rendering/batcher/shared/Batcher.mjs b/node_modules/pixi.js/lib/rendering/batcher/shared/Batcher.mjs
+index 0736d80..48fe094 100644
+--- a/node_modules/pixi.js/lib/rendering/batcher/shared/Batcher.mjs
++++ b/node_modules/pixi.js/lib/rendering/batcher/shared/Batcher.mjs
+@@ -24,6 +24,7 @@ class Batch {
+     this.canBundle = true;
+   }
+   destroy() {
++    this.bindGroup?.destroy();
+     this.textures = null;
+     this.gpuBindGroup = null;
+     this.bindGroup = null;
+@@ -48,6 +49,11 @@ function getBatchFromPool() {
+   return batchPoolIndex > 0 ? batchPool[--batchPoolIndex] : new Batch();
+ }
+ function returnBatchToPool(batch) {
++  // 再利用のプールへ戻す前に、シェーダーの購読とsourceの参照を外す。
++  batch.bindGroup?.destroy();
++  batch.bindGroup = null;
++  batch.gpuBindGroup = null;
++  batch.textures.clear();
+   batch.elements = null;
+   batchPool[batchPoolIndex++] = batch;
+ }
+diff --git a/node_modules/pixi.js/lib/scene/container/RenderGroupSystem.js b/node_modules/pixi.js/lib/scene/container/RenderGroupSystem.js
+index 34bc2e1..fd2ab06 100644
+--- a/node_modules/pixi.js/lib/scene/container/RenderGroupSystem.js
++++ b/node_modules/pixi.js/lib/scene/container/RenderGroupSystem.js
+@@ -56,6 +56,12 @@ class RenderGroupSystem {
+       this._updateCachedRenderGroups(renderGroup.renderGroupChildren[i], closestCacheAsTexture);
+     }
+     renderGroup.invalidateMatrices();
++    // 旧キャッシュ画像を返す前に、親バッチが持つ画像・samplerの購読を解放する。
++    if (renderGroup.texture && renderGroup.renderGroupParent) {
++      const parent = renderGroup.renderGroupParent;
++      this._renderer.renderPipes.batch.buildStart(parent.instructionSet);
++      parent.structureDidChange = true;
++    }
+     if (renderGroup.isCachedAsTexture) {
+       if (renderGroup.textureNeedsUpdate) {
+         const bounds = renderGroup.root.getLocalBounds();
+diff --git a/node_modules/pixi.js/lib/scene/container/RenderGroupSystem.mjs b/node_modules/pixi.js/lib/scene/container/RenderGroupSystem.mjs
+index 9723517..aa39a57 100644
+--- a/node_modules/pixi.js/lib/scene/container/RenderGroupSystem.mjs
++++ b/node_modules/pixi.js/lib/scene/container/RenderGroupSystem.mjs
+@@ -54,6 +54,12 @@ class RenderGroupSystem {
+       this._updateCachedRenderGroups(renderGroup.renderGroupChildren[i], closestCacheAsTexture);
+     }
+     renderGroup.invalidateMatrices();
++    // 旧キャッシュ画像を返す前に、親バッチが持つ画像・samplerの購読を解放する。
++    if (renderGroup.texture && renderGroup.renderGroupParent) {
++      const parent = renderGroup.renderGroupParent;
++      this._renderer.renderPipes.batch.buildStart(parent.instructionSet);
++      parent.structureDidChange = true;
++    }
+     if (renderGroup.isCachedAsTexture) {
+       if (renderGroup.textureNeedsUpdate) {
+         const bounds = renderGroup.root.getLocalBounds();
+diff --git a/node_modules/pixi.js/lib/scene/graphics/gpu/GpuGraphicsAdaptor.js b/node_modules/pixi.js/lib/scene/graphics/gpu/GpuGraphicsAdaptor.js
+index 87eb96c..1de7ddd 100644
+--- a/node_modules/pixi.js/lib/scene/graphics/gpu/GpuGraphicsAdaptor.js
++++ b/node_modules/pixi.js/lib/scene/graphics/gpu/GpuGraphicsAdaptor.js
+@@ -69,10 +69,9 @@ class GpuGraphicsAdaptor {
+           shader._overrides
+         );
+       }
+-      shader.groups[1] = batch.bindGroup;
+       if (!batch.gpuBindGroup) {
+         const textureBatch = batch.textures;
+-        batch.bindGroup = getTextureBatchBindGroup.getTextureBatchBindGroup(
++        batch.bindGroup ||= getTextureBatchBindGroup.getTextureBatchBindGroup(
+           textureBatch.textures,
+           textureBatch.count,
+           this._maxTextures
+@@ -83,6 +82,7 @@ class GpuGraphicsAdaptor {
+           1
+         );
+       }
++      shader.groups[1] = batch.bindGroup;
+       encoder.setBindGroup(1, batch.bindGroup, shader.gpuProgram);
+       encoder.renderPassEncoder.drawIndexed(batch.size, 1, batch.start);
+     }
+diff --git a/node_modules/pixi.js/lib/scene/graphics/gpu/GpuGraphicsAdaptor.mjs b/node_modules/pixi.js/lib/scene/graphics/gpu/GpuGraphicsAdaptor.mjs
+index e10754a..bae67ec 100644
+--- a/node_modules/pixi.js/lib/scene/graphics/gpu/GpuGraphicsAdaptor.mjs
++++ b/node_modules/pixi.js/lib/scene/graphics/gpu/GpuGraphicsAdaptor.mjs
+@@ -67,10 +67,9 @@ class GpuGraphicsAdaptor {
+           shader._overrides
+         );
+       }
+-      shader.groups[1] = batch.bindGroup;
+       if (!batch.gpuBindGroup) {
+         const textureBatch = batch.textures;
+-        batch.bindGroup = getTextureBatchBindGroup(
++        batch.bindGroup ||= getTextureBatchBindGroup(
+           textureBatch.textures,
+           textureBatch.count,
+           this._maxTextures
+@@ -81,6 +80,7 @@ class GpuGraphicsAdaptor {
+           1
+         );
+       }
++      shader.groups[1] = batch.bindGroup;
+       encoder.setBindGroup(1, batch.bindGroup, shader.gpuProgram);
+       encoder.renderPassEncoder.drawIndexed(batch.size, 1, batch.start);
+     }
+diff --git a/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.d.ts b/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.d.ts
+index e3e3d48..96f078f 100644
+--- a/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.d.ts
++++ b/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.d.ts
+@@ -35,6 +35,7 @@ export declare class GraphicsContextRenderData {
+     batcher: DefaultBatcher;
+     instructions: InstructionSet;
+     init(options: BatcherOptions): void;
++    reset(): void;
+     /**
+      * @deprecated since version 8.0.0
+      * Use `batcher.geometry` instead.
+diff --git a/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.js b/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.js
+index 8024247..722118b 100644
+--- a/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.js
++++ b/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.js
+@@ -60,6 +60,11 @@ class GraphicsContextRenderData {
+     deprecation.deprecation(deprecation.v8_3_4, "GraphicsContextRenderData#geometry is deprecated, please use batcher.geometry instead.");
+     return this.batcher.geometry;
+   }
++  reset() {
++    // 非バッチGraphicsも、contextをプールへ戻す時点でテクスチャ参照を解放する。
++    this.batcher?.begin();
++    this.instructions.reset();
++  }
+   destroy() {
+     this.batcher.destroy();
+     this.instructions.destroy();
+diff --git a/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.mjs b/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.mjs
+index dd30921..cf5ab2d 100644
+--- a/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.mjs
++++ b/node_modules/pixi.js/lib/scene/graphics/shared/GraphicsContextSystem.mjs
+@@ -58,6 +58,11 @@ class GraphicsContextRenderData {
+     deprecation(v8_3_4, "GraphicsContextRenderData#geometry is deprecated, please use batcher.geometry instead.");
+     return this.batcher.geometry;
+   }
++  reset() {
++    // 非バッチGraphicsも、contextをプールへ戻す時点でテクスチャ参照を解放する。
++    this.batcher?.begin();
++    this.instructions.reset();
++  }
+   destroy() {
+     this.batcher.destroy();
+     this.instructions.destroy();

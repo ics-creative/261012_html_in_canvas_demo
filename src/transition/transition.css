@@ -1,0 +1,329 @@
+/* 文字番号を整数として内側へ継承し、CSSだけで遅延を決める。 */
+@property --reveal-index {
+  syntax: "<integer>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.transition-stage {
+  background: var(--canvas-background);
+
+  .transition-host {
+    /* スクロールバーを演出の外へ残し、本文と同じ幅だけを描画する。 */
+    inset-inline-end: var(--scrollbar-size);
+    /* 本文の下でも描画を保ち、演出開始時に空のCanvasを表示しない。 */
+    pointer-events: none;
+  }
+
+  .transition-document {
+    position: absolute;
+    inset: 0;
+  }
+
+  &.is-transitioning {
+    /* 本文だけを隠し、ネイティブのスクロールバーは演出中も残す。 */
+    .transition-document > .html-page {
+      visibility: hidden;
+    }
+  }
+}
+
+.transition-document,
+.capture-page {
+  container-type: size;
+
+  .html-page {
+    --page-space: 48px;
+    --page-rule: color-mix(in srgb, var(--ink) 20%, var(--paper));
+    --heading-size: 128px;
+    --page-reveal-duration: 0.6s;
+    /* 長い見出しでも遅延を積み上げすぎず、全体を約1秒へ収める。 */
+    --page-reveal-stagger: 16ms;
+    /* Expo Outを近似し、各文字を素早く上げて滑らかに着地させる。 */
+    --page-reveal-ease: cubic-bezier(0.16, 1, 0.32, 1);
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    color: var(--ink);
+    background: var(--paper);
+
+    > .page-hero {
+      position: relative;
+      isolation: isolate;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: var(--page-space);
+      block-size: 100cqh;
+      min-block-size: 640px;
+      padding: 32px var(--page-space) var(--page-space);
+      color: var(--paper);
+
+      .hero-photo {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* 写真を全面に残し、文字と上部リンクの背後だけをなだらかに暗くする。 */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background:
+          linear-gradient(
+            to right,
+            color-mix(in srgb, var(--canvas-background) 64%, transparent),
+            transparent 80%
+          ),
+          linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--canvas-background) 48%, transparent),
+            transparent 24%
+          );
+        pointer-events: none;
+      }
+
+      .page-copy {
+        align-self: end;
+
+        p {
+          max-width: 480px;
+          font-size: 24px;
+          line-height: 1.6;
+          text-wrap: pretty;
+        }
+      }
+
+      /* MVのリンクは白い輪郭と半透明の面で示し、写真の明暗に左右されないようにする。 */
+      .source-links a {
+        border-color: currentColor;
+        background: color-mix(in srgb, var(--canvas-background) 32%, transparent);
+
+        &:hover,
+        &.current {
+          color: var(--ink);
+          background: var(--paper);
+        }
+      }
+
+      @container (width <= 768px) {
+        .page-copy p {
+          font-size: 20px;
+        }
+      }
+    }
+
+    /* 英文見出しの字面を揃え、文字と写真の余白を共通のGridで保つ。 */
+    h2 {
+      text-box: trim-both cap alphabetic;
+    }
+
+    .reveal-word {
+      --reveal-offset: attr(data-offset type(<integer>));
+      display: inline-block;
+      white-space: nowrap;
+      vertical-align: top;
+    }
+
+    .reveal-mask {
+      /* 前の単語の文字数へ兄弟順を足し、改行後も同じ順序で表示する。 */
+      --reveal-index: calc(var(--reveal-offset) + sibling-index() - 1);
+      /* 行内要素のまま包み、選択した文字の間へ改行が混ざるのを防ぐ。 */
+      display: inline-block;
+      overflow: clip;
+      vertical-align: top;
+    }
+
+    .reveal-char {
+      display: inline-block;
+    }
+
+    .source-header {
+      flex-wrap: wrap;
+      gap: 24px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid color-mix(in srgb, currentColor 32%, transparent);
+
+      > span {
+        font-size: 14px;
+      }
+    }
+
+    /* 枠と面でクリック領域を示し、ヘッダー・MV・フッターを同じリンクにする。 */
+    .source-links {
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: bold;
+
+      a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 48px;
+        padding: 12px;
+        border: 2px solid var(--ink);
+        line-height: 1.2;
+        transition:
+          color 0.2s,
+          background-color 0.2s;
+
+        &:hover,
+        &.current {
+          color: var(--paper);
+          background: var(--ink);
+        }
+      }
+
+      .source-link-number {
+        font-size: 12px;
+        font-weight: normal;
+        font-variant-numeric: tabular-nums;
+      }
+
+      &.hero-links {
+        display: grid;
+        gap: 12px;
+        width: 100%;
+        max-width: 400px;
+
+        a {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          gap: 16px;
+          min-height: 64px;
+          padding: 16px;
+          font-size: 20px;
+        }
+
+        svg {
+          width: 24px;
+          height: 24px;
+        }
+      }
+    }
+
+    .page-copy {
+      display: grid;
+      align-content: center;
+      gap: 32px;
+    }
+
+    > footer {
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: var(--page-space);
+      border-top: 2px solid var(--page-rule);
+
+      > span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+    }
+
+    @container (width <= 1000px) {
+      --heading-size: 64px;
+    }
+
+    @container (width <= 768px) {
+      --page-space: 24px;
+      .page-copy {
+        gap: 24px;
+      }
+    }
+
+    @container (width <= 600px) {
+      --heading-size: 48px;
+    }
+
+    @container (width <= 400px) {
+      --page-space: 16px;
+    }
+  }
+}
+
+/* 描画元HTMLの配置と寸法を確定してから、表示中の誌面にトリガーを登録する。 */
+.demo-layer:not([inert]) .transition-stage.has-scene {
+  .reveal-heading {
+    /* 見出しが入ったら時間で再生し、完全に画面外へ出たら初期状態へ戻す。 */
+    timeline-trigger: --page-reveal view() entry 0% exit 100%;
+    trigger-scope: --page-reveal;
+
+    .reveal-char {
+      animation: page-reveal var(--page-reveal-duration) var(--page-reveal-ease) both;
+      animation-delay: calc(var(--reveal-index) * var(--page-reveal-stagger));
+      animation-trigger: --page-reveal play-forwards reset;
+    }
+  }
+}
+
+@keyframes page-reveal {
+  from {
+    translate: 0 100%;
+  }
+}
+
+/* 縦長の画面でも、写真左側の塔をトリミングの中に残す。 */
+.laser-page .hero-photo {
+  object-position: 8% top;
+}
+
+.capture-page {
+  width: 100%;
+  height: 100%;
+  /* DOMのスクロール位置を同期し、表示されている範囲だけをキャプチャする。 */
+  overflow: hidden;
+}
+
+.page-details {
+  padding-inline: var(--page-space);
+
+  > section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 64px;
+    padding-block: 96px;
+    border-top: 2px solid var(--page-rule);
+
+    > div {
+      display: grid;
+      gap: 24px;
+
+      > span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+    }
+  }
+
+  h3 {
+    font-size: 48px;
+    font-weight: bold;
+    line-height: 1.2;
+  }
+
+  p {
+    max-width: 640px;
+    font-size: 20px;
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+
+  @container (width <= 768px) {
+    h3 {
+      font-size: 32px;
+    }
+
+    > section {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 32px;
+      padding-block: 64px;
+    }
+  }
+}

@@ -1,0 +1,65 @@
+:root {
+  /* Windowsの従来型を基に、地色・四角いつまみ・上下ボタンを常時見せる。 */
+  --scrollbar-size: 20px;
+  --scrollbar-track: #e0e0e0;
+  --scrollbar-border: #c0c0c0;
+  --scrollbar-thumb: #909090;
+  --scrollbar-thumb-hover: #808080;
+  --scrollbar-thumb-active: #606060;
+}
+
+.scrollable {
+  overflow-y: scroll;
+  overscroll-behavior: contain;
+
+  /* 幅を明示するとmacOSでもオーバーレイ式にならず、常時表示される。 */
+  &::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    box-shadow: inset 2px 0 var(--scrollbar-border);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 2px solid var(--scrollbar-track);
+    background: var(--scrollbar-thumb);
+
+    &:hover {
+      background: var(--scrollbar-thumb-hover);
+    }
+
+    &:active {
+      background: var(--scrollbar-thumb-active);
+    }
+  }
+
+  /* スクロール操作はブラウザーのボタンに任せ、矢印だけをCSSで描く。 */
+  &::-webkit-scrollbar-button {
+    display: none;
+    background: var(--scrollbar-track) no-repeat center / 12px 8px;
+
+    &:hover {
+      background-color: var(--scrollbar-border);
+    }
+
+    &:active {
+      background-color: var(--scrollbar-thumb);
+    }
+  }
+
+  &::-webkit-scrollbar-button:vertical:decrement:start,
+  &::-webkit-scrollbar-button:vertical:increment:end {
+    display: block;
+    height: var(--scrollbar-size);
+  }
+
+  &::-webkit-scrollbar-button:vertical:decrement:start {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M0 8 6 0 12 8' fill='%23505050'/%3E%3C/svg%3E");
+  }
+
+  &::-webkit-scrollbar-button:vertical:increment:end {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M0 0 6 8 12 0' fill='%23505050'/%3E%3C/svg%3E");
+  }
+}
