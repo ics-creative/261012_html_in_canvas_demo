@@ -32,7 +32,7 @@ URLはReact Routerの`HashRouter`で管理します。共通ヘッダーの下�
 
 TransitionsとLaserは縦スクロールに対応し、現在見えている範囲から遷移を開始します。見出しの表示にはCSSの`timeline-trigger`・`animation-trigger`と`sibling-index()`による時間差を使います。
 
-Glassでは元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
+Glassは32件の写真を縦にスクロールできます。ガラス部分だけを端末の解像度で処理し、ガウスぼかしと縁の屈折を合成します。元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
 
 ## 開発
 

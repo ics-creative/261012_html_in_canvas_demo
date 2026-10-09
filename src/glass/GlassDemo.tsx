@@ -16,6 +16,9 @@ const photos = [
   { file: "P3304136", title: "Stone facade", caption: "Paris / Architecture" },
 ];
 
+// 同じ8点を4周並べ、素材を増やさず縦スクロール中の屈折を見せる。
+const gallery = Array.from({ length: 4 }, () => photos).flat();
+
 /** 写真一覧の主ツールバーをガラスで描き、CSSのぼかしと比較する。 */
 export function GlassDemo() {
   const canvas = useRef<HitCanvas>(null);
@@ -36,8 +39,8 @@ export function GlassDemo() {
             <article className="glass-page" style={{ zoom: devicePixelRatio }}>
               {/* 一覧のスクロールと文字選択は元HTMLの標準操作に任せる。 */}
               <ul className="glass-list scrollable">
-                {photos.map(({ file, title, caption }) => (
-                  <li key={file}>
+                {gallery.map(({ file, title, caption }, index) => (
+                  <li key={index}>
                     <img src={`images/photos/${file}.jxl`} alt="" />
                     <h3>{title}</h3>
                     <p>{caption}</p>
@@ -51,7 +54,7 @@ export function GlassDemo() {
         <form ref={controls} className="glass-controls">
           <div>
             <h2>Photo Library</h2>
-            <p>{photos.length} photographs</p>
+            <p>{gallery.length} photographs</p>
           </div>
           <div className="glass-materials">
             <label>
