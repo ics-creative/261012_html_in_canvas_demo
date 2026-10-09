@@ -1,76 +1,79 @@
 # HTML in Canvas
 
-ReactのHTMLを使ったタイルによるページ遷移・レーザー・Distortion・布・本・CRTフォーム・CRT 3D・Liquid Glassのデモ。
+Reactで作ったHTMLに、WebGPUによる変形やエフェクトを加える8つのデモです。文字選択・右クリック・フォーム入力など、元HTMLの操作と組み合わせています。
 
-写真は指定フォルダー `/Users/ikeda/Desktop/261008` の20点を、JPEG XLの元ファイルのまま `public/images/photos` に配置しています。タイルは街・庭園・海岸、レーザーはセーヌ川の夕景と夜景、Distortionはギャラリー・ドーム・川、布は石造りの建物、本は街路・建築・川の写真集です。見出し・本文・フォーム文言も写真に合わせた英語です。
-
-React Routerの `HashRouter` で `#/transition/01`、`#/laser/01`、`#/distortion`、`#/cloth`、`#/book`、`#/crt`、`#/crt-3d`、`#/glass` を切り替えます。
-
-入口のpathnameは `/` に揃え、以前の `/experiment/book` などをHashRouterのリンクへ持ち越しません。ハッシュ内の行き先とクエリーは保ちます。
-
-共通ヘッダーの下は、左右・下端まで描画領域です。ナビゲーションは01〜08の番号付き英語リンク、デモ内の文言も英語です。`lang="en"` とGoogleの `notranslate` メタタグを指定しています。
-
-配色は使用先の `/Users/ikeda/Documents/git/261012_html_in_canvas` に合わせています。アクセントは `#3223b3`、文字は `#1f2937`、背景は白と `#eff2f5` です。共通のCSS変数をヘッダー・フォーム・前後ボタンで共有します。メニューは16pxの太字です。レーザーとタイル遷移の誌面は白地と濃い文字で組み、紫の全面背景は使いません。スクロールバーはWindowsの従来型を参考に、幅20pxのトラック・四角いつまみ・上下の矢印ボタンを常時表示します。白い誌面から区別できるグレー（#e0e0e0）の地色と2pxの境界線（#c0c0c0）を使い、つまみ（#909090）はホバー・押下時に濃くなります。ドラッグ・トラックのクリック・上下ボタンはブラウザー標準のスクロール操作です。
-
-ヘッダーは `scroll-target-group` と `:target-current` で現在地を選び、CSSアンカーポジショニングでピル背景を追従させます。`linear()` のスプリングで移動と幅の変化を付けています。ピルはスクロール領域の外に描き、端にもスプリングの余白を確保します。デモ間は移動先の初期描画を待って、そのまま表示を切り替えます。準備中は前の画面を表示します。同じデモ内のページ送りは各デモの演出を使います。
-
-各デモはReactの `lazy` と `Suspense` で必要なときに読み込みます。GPU初期化は `useTransition` の非同期Actionで待ち、最初の描画が終わってから表示を交換します。`useEffectEvent` で完了時の最新の遷移先を参照し、待機中の連打で古い画面へ戻しません。CRTフォームは `Activity` で入力とDOMを保持し、非表示時はEffectとGPU描画を止め、再表示時に描画を作り直します。レーザーではPixiJS、タイルではThree.jsだけを読み込みます。Three.jsは公式のES Modulesを描画基盤とTSLに分割して共有し、ライブラリの初期化順を保ちます。CSSの圧縮ではLightning CSSの `scrollNavigationControls` を有効にし、現在地表示の構文を解析します。
-
-布は真正面の平らなHTMLから始まり、2秒の静止後に風圧を2秒かけて立ち上げます。静止中は重力も進めません。待機中に触れた場合はすぐ物理を始めます。背景のドラッグで視点を回転、布のドラッグでつかみます。右ドラッグでも視点を回転できます。レーザーはページ内のリンクで遷移すると、不規則な角度と間隔でページを切断します。切断面から火花が散り、連射の開始・中盤・終盤にカメラへ短い衝撃が加わります。断片が同時に消えた後、次のページが少し拡大しながらフェードインします。
-
-レーザーとタイル遷移の誌面は描画領域いっぱいの縦スクロールページです。ファーストビューは写真が全面に広がり、タイトル・説明・行き先を示す「View」リンクをその上へ重ねます。文字側と上端だけに透過グラデーションを置き、写真の明暗にかかわらずリンクを読み取れるようにしています。ヘッダーとフッターにも番号付きの枠付きリンクを置き、どの位置のリンクでも各デモの演出でページを切り替えます。本文を途中まで読んだ位置もキャプチャへ同期し、現在見えているHTMLから演出を始めます。次の誌面は先頭から表示します。表示領域だけをテクスチャにし、長い本文全体のGPU画像は作りません。ネイティブのカスタムスクロールバーは遷移中も常時表示します。
-
-MVと本文の見出しは、[ICSの文字マスクの作例](https://github.com/ics-creative/230718_scroll_driven_animations/blob/main/index-timeline-trigger.html)を基に、CSSの `timeline-trigger`・`animation-trigger` で一文字ずつ下から表示します。各文字のマスク、`sibling-index()`、型付きの `attr()` と `@property` で16msのスタッガーを作り、改行後も表示順を継続します。各文字はExpo Outを近似した0.6秒の時間ベースで動き、長い見出しも約1秒で終わります。スクロールを止めても最後まで動き、`entry 0% exit 100%` の範囲外ではリセット、戻ると再生します。描画元HTMLの配置と初期描画を済ませてから、表示用HTMLとCanvas用HTMLへ同じCSSを適用します。ページ遷移後はMVの文字を `Animation.finish()` で完了位置へ揃え、CanvasからHTMLへ戻る際の再表示を防ぎます。単語と文字を行内要素で包み、選択した文字の間に改行を混ぜず、単語の途中で折り返しません。[Chrome公式の解説](https://developer.chrome.com/blog/scroll-triggered-animations)と[ICS MEDIAの記事](https://ics.media/entry/230718/)を参照しています。
+## 起動
 
 ```sh
 npm install
 npm run dev
 ```
 
-Chrome Betaで [http://localhost:5180](http://localhost:5180) を開きます。
+HTML in CanvasとWebGPUを使うChrome Beta向けです。[http://localhost:5180/#/transition/01](http://localhost:5180/#/transition/01) を開きます。
 
-```sh
-npm run build
-npm run lint
-npm run format
-```
+## 公開
 
-Three.jsの各デモは `HTMLTexture`、レーザーはPixiJSの `HTMLSource` で元HTMLをWebGPUへ直接渡します。CRTフォームは描画属性を設定したCanvasで `requestPaint()` と `drawElementImage()` によりテクスチャを更新します。最初のHTMLのpaintとGPU描画を終えてからアニメーションを開始します。
+[GitHub Pages](https://ics-creative.github.io/261012_html_in_canvas_demo/)で公開しています。`main`へのpushでGitHub Actionsがビルドし、`dist/`をデプロイします。Viteの`base: "./"`と素材の相対パスで、公開フォルダー内から読み込みます。
 
-各デモは生成関数の中で状態を保持し、描画オブジェクトと操作用の関数を返します。自作クラスは使用しません。共通の初期化でフォントと元HTMLの全写真の `decode()` を開始し、BookとCRT 3Dはその間にGPUとシーンを準備します。HTMLの取り込み直前に読み込みを待ち、最初の描画を済ませてから操作を開始します。遷移用テクスチャは最初のpaintを待って使い、以後はHTMLの変更時に内容を更新します。画面を離れる際は `AbortSignal` でイベントと描画ループを止め、GPUリソースを解放します。
+## デモ一覧
 
-DOM配置後のGPU初期化には `useLayoutEffect`、Canvasやフォームの参照には `useRef` を使います。誌面番号や送信後の表示は即時のローカル状態なので `useState` で管理します。重い検索結果の遅延表示やサーバーへの更新はないため、`useDeferredValue` と `useOptimistic` は使用していません。
+| No. | デモ                                                 | 内容・操作                                                                                                                               | 描画     |
+| --- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 01  | [Transitions](http://localhost:5180/#/transition/01) | 縦スクロールの誌面をタイルで切り替える。MV・ヘッダー・フッターのリンクから遷移。                                                         | Three.js |
+| 02  | [Laser](http://localhost:5180/#/laser/01)            | 誌面内のリンクでランダムに切断。断片が同時に消え、次のページが拡大しながらフェードイン。                                                 | PixiJS   |
+| 03  | [Distortion](http://localhost:5180/#/distortion)     | 前後ボタンで切り替える。背景と文字を時間差で歪ませ、文字は退場後に次の内容が入場する。演出中はボタンを無効化。                           | Three.js |
+| 04  | [Cloth](http://localhost:5180/#/cloth)               | 正面の平らなHTMLから始まり、風で揺れる布になる。布のドラッグでつかみ、背景または右ドラッグで視点を回転。ホイールでズーム。               | Three.js |
+| 05  | [Book](http://localhost:5180/#/book)                 | 前後ボタン・紙端のクリックやドラッグでページをめくる。背景のドラッグで回転、ホイールでズーム。本文の選択と文字・画像の右クリックに対応。 | Three.js |
+| 06  | [CRT](http://localhost:5180/#/crt)                   | 入力できるHTMLフォームにCRT・グリッチ・発光を重ねる。「Effects」でON/OFF。送信はデモ内の表示を更新する。                                 | PixiJS   |
+| 07  | [CRT 3D](http://localhost:5180/#/crt-3d)             | iMac風の筐体の曲面画面にHTMLフォームを表示。筐体や背景のドラッグで視点を回転し、画面上では入力・選択・右クリックを操作。                 | Three.js |
+| 08  | [Glass](http://localhost:5180/#/glass)               | 写真一覧の「Photo Library」ツールバーがガラス部分。「Liquid Glass」と「CSS blur」で屈折とCSSのぼかしを比較。                             | Three.js |
 
-レーザーはPixiJSの `WebGPURenderer` を直接使用します。白いHTML誌面を暗い舞台の上で切断し、断片が離れた隙間を見せます。HTMLの断片を標準の `Graphics` で描き、光と火花には青・オレンジの光彩を重ねます。線の白い芯は2px、火花の芯は有色の通常合成にし、白地でも消えないようにします。通常合成の芯は `RenderLayer` へまとめ、粒子ごとに合成方法を切り替えません。火花は線より細く短くし、数と光量を抑えて切断面を隠しません。進行方向へ減速しながら残り、芯を潰さずに後半の明るさを落とします。切断・視点の衝撃・次ページの表示をGSAPのタイムラインにまとめています。独自クラスやGLSLは使っていません。
+URLはReact Routerの`HashRouter`で管理します。共通ヘッダーの下全体が描画領域で、UIは英語表記です。
 
-PixiJS 8.22.0のWebGPUバッチは、終了後もテクスチャへの参照を残すため、バッチをプールへ戻す時点で解放する修正を適用しています。キャッシュ画像の更新時も、旧画像を返す前に親のバッチを解放します。CRTのフィルターが借りた中間画像は描画後に参照を外し、リサイズ時の破棄に持ち越しません。画面を離れる際は親のバッチ、子のキャッシュ画像の順に解放します。`patches/pixi.js+8.22.0.patch` は `npm install` 時に `patch-package` で適用します。ライブラリーの更新時は修正内容を確認し、上流で解決されたらパッチを削除します。
+TransitionsとLaserは縦スクロールに対応し、現在見えている範囲から遷移を開始します。見出しの表示にはCSSの`timeline-trigger`・`animation-trigger`と`sibling-index()`による時間差を使います。
 
-布と本の描画にはThree.jsのWebGPUBackendを使用します。布は48×30の物理格子をWeb Worker内でXPBDにより120Hzで計算し、Three.jsの `CubicInterpolant` で192×120の描画格子へ位置と法線を補間します。物理格子だけを減らし、細かな描画を保ったまま毎フレーム姿勢を更新します。計算中は更新メッセージを重ねず、解いた姿勢が届いたときだけ描画格子を更新します。GPUの頂点転送も変更時だけにし、影パスや同じ姿勢の再描画では繰り返しません。固定刻みの前後の姿勢を補間し、両方の視点操作にダンピングを使用します。ドラッグの開始・移動・終了は `@use-gesture/vanilla` にまとめています。
+Glassでは元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
 
-布の視点は中心より下へ回転できない範囲に制限し、ズームは画面に収まる初期距離の1〜1.6倍とします。リサイズでもこの範囲を更新し、布には遠景用のフォグを掛けません。床はThree.js標準の [`reflector()`](https://threejs.org/docs/pages/ReflectorNode.html) で平面反射を描き、布の変形と視点回転に追従します。床の照明と影へ半解像度の鮮明な鏡像を重ね、環境光の映り込みを抑えて布の輪郭を見せます。反射用のGPU画像も画面を離れる際に解放します。
+## 開発
 
-変化しない形状・照明・素材はThree.jsのシーンデータとして読み込みます。シーン内の画像は標準の `ObjectLoader.load()` で並列に読み込み、Bookの紙の繊維もGPU・シーンと同時に準備します。誌面には指定写真、紙の繊維や発光には画像素材を使い、毎回同じデータを生成するコードを置きません。スタイルはネイティブCSSです。
+Vite、React 19.3、TypeScript 7、React Routerを使用しています。描画はThree.jsとPixiJSのWebGPU、アニメーションはGSAP、ドラッグは`@use-gesture/vanilla`、スタイルはネイティブCSSです。
 
-本は12ページの英語HTML誌面を1040×1440で描画します。下部の矢印またはページ端のクリック・ドラッグで前後にめくり、背景のドラッグで視点を回転、ホイールで拡大縮小できます。本文のドラッグは文字選択です。紙面のUVと三角形の投影から元HTMLの位置・縮尺・傾きを合わせ、`updateElementGeometry()` でヒット領域を登録します。文字上ではI字カーソルになり、速いドラッグの終点もブラウザーのキャレット位置へ合わせます。文字の選択・コピー・検索、画像の保存にはブラウザー標準の操作とメニューを使います。選択のハイライトも描画へ反映します。紙の繊維と漉きむら、布張りの表紙、厚みのあるウォルナットの天板を描画しています。紙のマテリアルは一つにまとめ、Three.jsのオブジェクト参照で表裏の誌面と透過量だけを切り替えます。起動時は見開きだけを描き、めくる紙の重複した予備描画は行いません。
+| コマンド         | 用途                                                   |
+| ---------------- | ------------------------------------------------------ |
+| `npm run build`  | ビルド。出力先は`dist/`。                              |
+| `npm run lint`   | oxlintで検査。設定は[.oxlintrc.json](.oxlintrc.json)。 |
+| `npm run format` | oxfmtで整形。設定は[.oxfmtrc.json](.oxfmtrc.json)。    |
 
-CRTフォームはPixiJSのWebGPU描画でCRT・Glitch・AdvancedBloomフィルターを使用します。CRTの走査線・ノイズは控え、フォームを読みやすくしています。中央の明るさを保ちながら、画面の縁には滑らかな周辺減光を重ねています。グリッチの強さと30fpsの更新間隔は保ち、CRTは毎フレーム描画します。発光はHTMLや強度が変わったときだけ更新します。元HTMLのヒット領域を描画へ合わせ、マウスで入力・文字選択・送信を操作できます。「Effects」スイッチでCRT・グリッチ・発光とガラス面の走査線をまとめてON/OFFできます。OFF時はフィルターの更新も止めます。フォームのフォーカスによる強度変更はありません。入力とON/OFFの状態は、別のデモから戻ったときにも保持します。送信ボタンはデモ内で受付表示を更新します。
+Three.jsは`HTMLTexture`、LaserはPixiJSの`HTMLSource`で元HTMLを取り込みます。CRTは`requestPaint()`と`drawElementImage()`でフォームをテクスチャへ反映します。CRT 3DはThree.jsのみで描画します。
 
-07のCRT 3Dは `#/crt-3d` で開きます。Three.jsのWebGPUだけを使い、Aqua風のHTMLフォームを `HTMLTexture` で曲面画面へ直接描きます。PixiJSのレンダラー・フィルター・中間Canvas・画像転送は使いません。描画と入力を同じCanvasにまとめ、端末の解像度で最初のHTMLのpaintを待ってから描画を開始します。CRTの質感はガラスの曲率で表現します。[Appleの実機写真](https://support.apple.com/en-us/docs/mac/8001)を基に、前面の後傾、丸い背面と下腹、低い脚を持つ不透明な無彩色の筐体へ整理しました。筐体は前面と背面で樹脂の粗さを分け、シェーダーを共有します。面光源の反射・GTAO・柔らかい接地影で立体感を付けています。HTML画面は元の色を保ち、画面より広い開口部で上部メニューの隠れを防ぎます。背景・筐体のドラッグで視点を回転し、画面上では標準HTMLの入力・選択・右クリックを使います。筐体に隠れた画面へ入力を通さず、本と同じ曲面のヒット座標処理を共有します。フォームの入力はActivityで保持します。
+各デモは`lazy`・`Suspense`で読み込み、フォント・写真・HTMLの初回paint・GPU描画を終えてから表示します。CRTとCRT 3Dの入力は`Activity`で保持し、非表示中は描画を止めます。画面を離れる際のイベント解除とGPUリソースの解放は`AbortSignal`にまとめています。
 
-08のLiquid Glassは `#/glass` で開きます。JPEG XLの大きな写真を並べたHTMLの一覧を縦スクロールできます。写真の上に浮く「Photo Library」の主ツールバー全体がガラスです。「Liquid Glass」と「CSS blur」を切り替え、同じ位置でWebGPUの屈折とCSSの `backdrop-filter: blur()` を比較します。選択状態は標準HTMLのラジオボタンが持ち、Reactの状態管理や同期用のAPIは置きません。スクロールバーは共通CSSを使います。
+## ディレクトリ構成
 
-ガラスは[Appleの公式解説](https://developer.apple.com/videos/play/wwdc2025/219/)と[Kubeの屈折計算](https://kube.io/blog/liquid-glass-css-svg/)を基にしています。外形はそのままに、convex squircleの断面を縁から中央へつなぎ、Snellの法則で写真や文字を連続的に拡大・屈折させます。画面座標とTSLの微分のY方向を揃え、上下で屈折が逆にならないようにしています。白い操作文字の周囲だけを背景の明るさに応じて減光し、余白には写真の色を通します。中央には控えめな散乱、縁には周囲の色と入射角に応じた反射・細いハイライトを重ねます。散乱の幅は画面の解像度に合わせています。Three.jsの `QuadMesh` 一枚とTSLで同じ `HTMLTexture` を合成し、初回はHTMLのpaintを待ってから描画を開始します。以後はHTMLの標準paintと材質の変更を次の一フレームへまとめて描き、静止中は停止します。リサイズ時のGPU画像の確保とHTMLの転送を分け、paint中に画像を作り直しません。元HTMLの文字選択、画像と文字の右クリックを保ちます。屈折した縁の操作領域は元HTMLの位置です。
+| パス                                 | 内容                                                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| [`src/app/`](src/app/)               | ルーティング、共通ヘッダー、表示切り替え、スクロールバー。                                             |
+| [`src/canvas/`](src/canvas/)         | HTML取り込み、描画の初期化・破棄、ヒット領域、視点操作。`cloth/`に布の物理、`laser/`にレーザーの描画。 |
+| [`src/transition/`](src/transition/) | タイル遷移、誌面、見出しのスクロールアニメーション。Laserとページ切り替えの枠組みを共有。              |
+| [`src/distortion/`](src/distortion/) | 背景・文字の変形とぼかし。                                                                             |
+| [`src/book/`](src/book/)             | 本のHTML誌面、紙の変形、シーン。                                                                       |
+| [`src/crt/`](src/crt/)               | CRTフォームとCRT 3D。                                                                                  |
+| [`src/glass/`](src/glass/)           | 写真一覧とガラスの屈折。                                                                               |
+| [`src/poster/`](src/poster/)         | 布に描く元HTML。                                                                                       |
+| [`public/`](public/)                 | 写真、紙・木材のテクスチャ、静的シーン。                                                               |
+| [`patches/`](patches/)               | PixiJSへの修正。                                                                                       |
 
-Distortionは `260917_html_in_canvas` の同名デモを基にしています。文字は1.2秒で流れ去り、その退場が完了してから次の文字を1.2秒で入場させます。見出しと説明文の開始は0.08秒ずらします。背景は両方の動きに重ねて2.4秒かけて変形し、次の文字と一緒に切り替え終えます。HTML面の各点を流速場へ流し、移動と一緒に文字の輪郭を伸ばします。横方向の渦を抑え、文字が大きく崩れない強度に調整しています。退場の後半にガウスぼかしを増やしてから文字を消し、次の文字は右下から歪みを解きながら `expo.out` で到着します。静止中は原寸のHTMLへ戻り、文字を選択できます。演出中は前後の矢印を無効にし、最終描画とHTMLへの復帰が済んだ時点で操作を戻します。文字面は退場・入場の二枚を使い回し、途中の背景保存や入場予約の管理は置きません。描画とHTMLへの復帰は同じフレームにまとめています。
+### PixiJSのパッチ
 
-タイル遷移とDistortionもThree.jsのWebGPUBackendで描画します。タイル遷移はスクロール後のpaintを待ち、次の描画フレームでGPUへ反映してから元HTMLを隠します。演出用Canvasは本文の下に置いたまま描画し、デモ間の切り替えでも移動先を現在の画面の背後で準備します。Canvasの不透明度を切り替えないため、開始直後に空のフレームを出しません。同じ寸法でCanvasを再設定せず、リサイズ時のGPU画像の再確保もpaint後の描画フレームへまとめます。Distortionの変形はTSLで定義し、風の勾配は一度描いて各文字面で共有します。文字面のぼかしにはThree.jsの `gaussianBlur` を使用し、ぼかす中間画像だけを縮小します。入力画像はページ変更時に更新し、ぼかしがゼロの間は中間バッファの描画も止めます。元HTMLと表示Canvasは端末の解像度を保ちます。
+PixiJS 8.22.0のWebGPUバッチやフィルターに残るテクスチャ参照を解放するため、[pixi.js+8.22.0.patch](patches/pixi.js+8.22.0.patch)を適用しています。`npm install`時に`postinstall`の`patch-package`が自動実行されます。PixiJSを更新する際は、上流での修正状況を確認してパッチを見直します。
 
-参考: [PixiJS HTML Laser](https://pixijs-html-in-canvas.vercel.app/)、[Slicer implements GlowLine — miyaoka](https://beautifl.net/run/51/)、[HTML cloth](https://arrival.space/htmlcanvas)、[ClockMaker Effects](https://clockmaker.jp/project/flash-effects/)、[Simple tiled motion of photo display](https://labs.clockmaker.jp/works/230514_three_tiled_motion)。
+## 素材・参考
 
-本とDistortionの前後ボタンは、半透明の黒い円と白いSVGで共通化しています。title属性は置かず、ボタンとナビゲーションリンクのラベルは文字選択から外します。本文と入力欄の選択は保ち、Distortionの矢印は押すと縮んでスプリングで戻ります。本の天板は塗膜を使わないマットなウォールナットです。木目・ノーマル・粗さのマップを同じ縮尺で重ね、木の導管と繊維による細かな陰影を出します。
+写真は提供された20点のJPEG XLを変換せず、[`public/images/photos/`](public/images/photos/)に配置しています。本の木材テクスチャは[Smoked Walnut Veneer — Jenelle van Heerden / Poly Haven](https://polyhaven.com/a/smoked_walnut_veneer)（CC0）です。
 
-BookとCRT 3DのGTAO前処理は、照明・SSS・反射を計算しない法線専用のマテリアルを使います。最終描画の素材・陰影・解像度はそのまま保ちます。
-
-本の天板のノーマル強度は1.6、紙面のバンプ強度は0.16、表紙のバンプ強度は0.04です。木目・紙の繊維・布目の凹凸を斜光で見せます。
-
-本の木材テクスチャ: [Smoked Walnut Veneer — Jenelle van Heerden / Poly Haven](https://polyhaven.com/a/smoked_walnut_veneer)（CC0）。
+- タイル遷移：[Simple tiled motion of photo display](https://labs.clockmaker.jp/works/230514_three_tiled_motion)、[ClockMaker Effects](https://clockmaker.jp/project/flash-effects/)
+- レーザー：[PixiJS HTML Laser](https://pixijs-html-in-canvas.vercel.app/)、[Slicer implements GlowLine — miyaoka](https://beautifl.net/run/51/)
+- 布：[HTML cloth](https://arrival.space/htmlcanvas)
+- スクロールアニメーション：[ICS MEDIAの記事](https://ics.media/entry/230718/)、[timeline-triggerの作例](https://github.com/ics-creative/230718_scroll_driven_animations/blob/main/index-timeline-trigger.html)、[Chrome公式の解説](https://developer.chrome.com/blog/scroll-triggered-animations)
+- CRT 3D：[Appleの実機資料](https://support.apple.com/en-us/docs/mac/8001)
+- ガラス：[AppleのLiquid Glass解説](https://developer.apple.com/videos/play/wwdc2025/219/)、[liquidGL](https://github.com/naughtyduk/liquidGL)、[ybouaneのシェーダー実装](https://github.com/ybouane/liquidglass/blob/main/src/shaders.ts)

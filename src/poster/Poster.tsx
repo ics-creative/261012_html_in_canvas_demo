@@ -18,7 +18,7 @@ export function Poster() {
           <p>Stone walls, slate roofs and narrow windows above the street.</p>
         </div>
         {/* 写真も元HTMLに置き、布の変形と同じ面へ描画する。 */}
-        <img className="poster-photo" src="/images/photos/P3212130.jxl" alt="" />
+        <img className="poster-photo" src="images/photos/P3212130.jxl" alt="" />
       </div>
       <footer className="poster-bottom">
         <label>

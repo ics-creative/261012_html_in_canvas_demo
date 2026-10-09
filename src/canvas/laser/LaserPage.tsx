@@ -7,7 +7,7 @@ export const laserPages = [
   {
     id: "01",
     name: "Dusk",
-    image: "/images/photos/P3324490.jxl",
+    image: "images/photos/P3324490.jxl",
     description: "The Eiffel Tower beside the Seine as the daylight fades.",
     sections: [
       {
@@ -27,7 +27,7 @@ export const laserPages = [
   {
     id: "02",
     name: "Blue hour",
-    image: "/images/photos/P3324910.jxl",
+    image: "images/photos/P3324910.jxl",
     description: "Gold lights on the tower, blue water and a narrow pink horizon.",
     sections: [
       {
@@ -47,7 +47,7 @@ export const laserPages = [
   {
     id: "03",
     name: "Night",
-    image: "/images/photos/P3325232.jxl",
+    image: "images/photos/P3325232.jxl",
     description: "An illuminated tower and a passing boat recorded across the water.",
     sections: [
       {

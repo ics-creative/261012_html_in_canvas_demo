@@ -21,7 +21,7 @@ export async function createSurfaceEngine(
   // 画面の離脱で購読・ループを止めてから、GPUリソースをまとめて解放する。
   const [renderer, scene] = await Promise.all([
     createRenderer(host, signal),
-    loadSceneAsset("/scenes/cloth.json", signal),
+    loadSceneAsset("scenes/cloth.json", signal),
   ]);
   signal.throwIfAborted();
   renderer.toneMapping = THREE.AgXToneMapping;

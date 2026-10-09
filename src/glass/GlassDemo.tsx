@@ -38,7 +38,7 @@ export function GlassDemo() {
               <ul className="glass-list scrollable">
                 {photos.map(({ file, title, caption }) => (
                   <li key={file}>
-                    <img src={`/images/photos/${file}.jxl`} alt="" />
+                    <img src={`images/photos/${file}.jxl`} alt="" />
                     <h3>{title}</h3>
                     <p>{caption}</p>
                   </li>

@@ -7,9 +7,9 @@ export const pageHeight = 1440;
 const chapters = [
   {
     title: "Streets",
-    image: "/images/photos/P3171064.jxl",
-    essayImage: "/images/photos/P3171023.jxl",
-    detailImage: "/images/photos/P3171076.jxl",
+    image: "images/photos/P3171064.jxl",
+    essayImage: "images/photos/P3171023.jxl",
+    detailImage: "images/photos/P3171076.jxl",
     subtitle: "Market stalls, rooftops and planted walls",
     paragraphs: [
       "Market stalls line a narrow street beneath the trees. Pale umbrellas cover the tables, while people move through the open space in the middle. Sunlight reaches the pavement in small patches between the branches.",
@@ -22,9 +22,9 @@ const chapters = [
   },
   {
     title: "Buildings",
-    image: "/images/photos/P3304136.jxl",
-    essayImage: "/images/photos/P3171112.jxl",
-    detailImage: "/images/photos/BF_06735.jxl",
+    image: "images/photos/P3304136.jxl",
+    essayImage: "images/photos/P3171112.jxl",
+    detailImage: "images/photos/BF_06735.jxl",
     subtitle: "Stone facades and the shapes above the street",
     paragraphs: [
       "A tall stone facade rises behind the trees. Repeated windows hold the lower parts together, while towers and carved details break up the skyline. The tree canopy hides the street and brings the upper floors into view.",
@@ -37,9 +37,9 @@ const chapters = [
   },
   {
     title: "Seine",
-    image: "/images/photos/P3324743.jxl",
-    essayImage: "/images/photos/P3325229.jxl",
-    detailImage: "/images/photos/P3325234.jxl",
+    image: "images/photos/P3324743.jxl",
+    essayImage: "images/photos/P3325229.jxl",
+    detailImage: "images/photos/P3325234.jxl",
     subtitle: "Evening light along the river",
     paragraphs: [
       "A narrow pink band remains above the far bridge as the sky turns blue. The tower stands beside the left bank, and the river leads towards the horizon. The first reflections are visible along the darker edge of the water.",
@@ -80,7 +80,7 @@ const pages: Page[] = [
     layout: "introduction",
     header: "Introduction",
     title: "Around the city",
-    image: "/images/photos/P3325074.jxl",
+    image: "images/photos/P3325074.jxl",
     paragraphs: [
       "These photographs move from the streets to the rooftops, then return to the river after sunset. Markets, planted walls and stone facades show different parts of the city in daylight.",
       "Each chapter begins with a full-page photograph. The following pages bring together related views and a few details that are easy to miss at first glance.",

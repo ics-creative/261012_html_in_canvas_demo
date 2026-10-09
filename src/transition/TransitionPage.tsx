@@ -6,7 +6,7 @@ export const pages = [
   {
     id: "01",
     name: "Paris",
-    image: "/images/photos/P3171021.jxl",
+    image: "images/photos/P3171021.jxl",
     description: "Tree-lined avenues, pale rooftops and the skyline beyond.",
     sections: [
       {
@@ -26,7 +26,7 @@ export const pages = [
   {
     id: "02",
     name: "Gardens",
-    image: "/images/photos/BF_06794.jxl",
+    image: "images/photos/BF_06794.jxl",
     description: "Clipped hedges and circular beds beside a long stretch of water.",
     sections: [
       {
@@ -46,7 +46,7 @@ export const pages = [
   {
     id: "03",
     name: "Coast",
-    image: "/images/photos/P3233004.jxl",
+    image: "images/photos/P3233004.jxl",
     description: "Mont Saint-Michel across wet sand and shallow water.",
     sections: [
       {

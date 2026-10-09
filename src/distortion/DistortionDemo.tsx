@@ -10,17 +10,17 @@ import "./distortion.css";
 const pages = [
   {
     title: "GALLERY",
-    image: "/images/photos/BF_06888.jxl",
+    image: "images/photos/BF_06888.jxl",
     description: "Tall windows, chandeliers and reflected light along a crowded gallery.",
   },
   {
     title: "DOME",
-    image: "/images/photos/P3171108.jxl",
+    image: "images/photos/P3171108.jxl",
     description: "Coloured glass and curved balconies beneath an ornate domed roof.",
   },
   {
     title: "RIVER",
-    image: "/images/photos/P3335279.jxl",
+    image: "images/photos/P3335279.jxl",
     description: "The Eiffel Tower, riverside lights and a violet sky reflected in the Seine.",
   },
 ];

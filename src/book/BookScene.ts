@@ -27,13 +27,13 @@ export async function createBookScene(
   // シーン素材・紙の繊維・GPUは依存しないため、まとめて読み込む。
   const [renderer, scene, paperGrain] = await Promise.all([
     createRenderer(host, signal, canvas),
-    loadSceneAsset("/images/book/scene.json", signal),
+    loadSceneAsset("images/book/scene.json", signal),
     loadPaperGrain(),
   ]);
   // 初期化中の離脱では、読み込み済みの素材とGPUをsignalで解放する。
   signal.throwIfAborted();
   async function loadPaperGrain() {
-    return own(signal, await new THREE.TextureLoader().loadAsync("/images/book/paper-grain.png"));
+    return own(signal, await new THREE.TextureLoader().loadAsync("images/book/paper-grain.png"));
   }
 
   // シーン素材は天板・表紙・紙束の静的形状と照明を保存し、角丸も事前に計算する。
