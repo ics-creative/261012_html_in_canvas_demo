@@ -71,7 +71,7 @@
 }
 
 .glass-controls {
-  --glass-height: 56px;
+  --glass-height: 64px;
   position: absolute;
   /* 常時表示するスクロールバーを除いた、本文の幅へ合わせる。 */
   inset: 48px var(--scrollbar-size) auto 0;
@@ -79,7 +79,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 4px;
-  width: min(560px, calc(100% - 32px - var(--scrollbar-size)));
+  width: min(384px, calc(100% - 32px - var(--scrollbar-size)));
   height: var(--glass-height);
   padding: 4px;
   border-radius: calc(var(--glass-height) / 2);
@@ -93,14 +93,16 @@
 
   a {
     display: flex;
+    /* 大きめのアイコンと小さなラベルを縦に揃え、図形へ視線を集める。 */
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 4px;
     min-width: 0;
-    padding: 4px;
+    padding-inline: 4px;
     border-radius: calc(var(--glass-height) / 2 - 4px);
     color: inherit;
-    font-size: 14px;
+    font-size: 10px;
     font-weight: bold;
     line-height: 1.2;
     text-align: center;
@@ -124,8 +126,8 @@
 
   svg {
     flex-shrink: 0;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -133,22 +135,14 @@
     stroke-linejoin: round;
   }
 
+  span {
+    display: grid;
+    place-items: center;
+    min-height: 24px;
+    text-wrap: balance;
+  }
+
   @media (width <= 640px) {
-    --glass-height: 64px;
-    width: calc(100% - 16px - var(--scrollbar-size));
-
-    a {
-      flex-direction: column;
-      gap: 4px;
-      padding-block: 0;
-      font-size: 12px;
-    }
-
-    span {
-      display: grid;
-      place-items: center;
-      min-height: 28px;
-      text-wrap: balance;
-    }
+    width: min(384px, calc(100% - 16px - var(--scrollbar-size)));
   }
 }
