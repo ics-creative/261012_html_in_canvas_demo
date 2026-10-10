@@ -38,7 +38,7 @@ export async function createLaserTransition(
   let running = false;
   const layout = createPageCapture(canvases);
   layout.resize(container.clientWidth, container.clientHeight);
-  // 2D Canvasへ複写せず、元HTMLをPixiJSの標準HTMLSourceで直接GPUへ渡す。
+  // 元HTMLをPixiJSの標準HTMLSourceから、直接GPUへ渡す。
   const captures = canvases.map((owner) => {
     const source = owner.firstElementChild as HTMLElement;
     renderer.canvas.append(source);
@@ -67,7 +67,7 @@ export async function createLaserTransition(
     incoming.visible = false;
     const angle = Math.random() * Math.PI * 2;
     const animation = laser.cut(captures[current], (strength) => {
-      // 2Dの視点を連射全体で3回だけ押し戻し、一発ごとの細かな振動を避ける。
+      // 2Dの視点を連射全体で3回押し戻し、切断のまとまりに合わせて衝撃をつける。
       const at = animation.time();
       animation
         .to(
@@ -120,7 +120,7 @@ export async function createLaserTransition(
 
   function scrollTo(page: number, top: number) {
     layout.scrollTo(page, top);
-    // スクロールでは描画だけを更新し、Canvasの寸法を毎回作り直さない。
+    // スクロール位置をHTMLへ反映し、更新後の画面を再描画する。
     captures[page].source.requestPaint();
   }
 

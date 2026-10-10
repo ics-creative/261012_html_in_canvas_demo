@@ -15,7 +15,7 @@ export function DemoViewport({ children }: { children: ReactNode }) {
   const active = demoPath(displayed);
   // 同じデモのページ送りでは描画エンジンを保ち、離れる際も最新のURLを残す。
   if (active === requested && displayed !== location) setDisplayed(location);
-  // 訪問済みのフォームだけを保持し、入力を消さずにGPU描画を休止する。
+  // 訪問済みのフォームと入力を保持し、非表示のGPU描画を休止する。
   if (["/crt", "/crt-3d"].includes(requested) && !forms.includes(location)) {
     setForms([...forms.filter((route) => demoPath(route) !== requested), location]);
   }
@@ -25,12 +25,12 @@ export function DemoViewport({ children }: { children: ReactNode }) {
   }
 
   function ready(next: Location) {
-    // 初期化中に行き先が変わった場合は、古い画面を表示へ戻さない。
+    // 初期化の完了通知は、現在の遷移先に一致する画面だけに反映する。
     if (demoPath(next) === active || demoPath(next) !== requested) return;
     startTransition(() => setDisplayed(location));
   }
 
-  // リンク先のDOMを保ってIDだけを変え、現在地のアンカーを途切れさせない。
+  // リンク先のDOMを保持し、描画領域のIDで現在地のアンカーを更新する。
   return (
     <div className="demo-viewport" id={active.startsWith("/glass") ? "/glass" : active}>
       {locations.map((route) => {
@@ -40,7 +40,7 @@ export function DemoViewport({ children }: { children: ReactNode }) {
           <Activity key={path} mode={visible || path === requested ? "visible" : "hidden"}>
             <div className="demo-layer" style={{ zIndex: visible ? 1 : 0 }} inert={!visible}>
               <SceneReadyContext value={() => ready(route)}>
-                {/* 背後で初期描画し、Canvasの表示切替による空のフレームを出さない。 */}
+                {/* 背後で初期描画を済ませ、準備が整ったCanvasへ表示を切り替える。 */}
                 <Suspense fallback={null}>
                   <Routes location={route}>{children}</Routes>
                 </Suspense>

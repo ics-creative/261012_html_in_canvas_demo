@@ -85,7 +85,7 @@
   .crt-glass {
     z-index: 3;
     pointer-events: none;
-    /* 中央を暗くせず、フィルターに重ねて縁のガラスの陰影を残す。 */
+    /* 中央の明るさを保ち、フィルターの上へガラスの縁の陰影を重ねる。 */
     background:
       repeating-linear-gradient(0deg, #0001 0 2px, transparent 2px 4px),
       radial-gradient(ellipse at center, transparent 64%, #0004);
@@ -201,7 +201,7 @@
 
   @media (width <= 700px) {
     padding: 32px 24px;
-    /* 狭い画面ではスイッチの下へ見出しを置き、重なりを防ぐ。 */
+    /* 狭い画面ではスイッチと見出しを上下に並べる。 */
     padding-top: 80px;
 
     h2 {

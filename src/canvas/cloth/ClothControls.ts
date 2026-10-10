@@ -15,7 +15,7 @@ export function createClothControls(
   signal: AbortSignal,
 ) {
   const orbit = createOrbit(camera, canvas, signal);
-  // 正面の導入を保ち、視点が布の中心より下へ回り込むのを防ぐ。
+  // 正面から導入し、視点の回転範囲を布の中心以上の高さへ制限する。
   orbit.minPolarAngle = 0.2;
   orbit.maxPolarAngle = Math.PI / 2;
   orbit.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
@@ -38,7 +38,7 @@ export function createClothControls(
         const intersection = ray(event).intersectObject(picking)[0];
         if (!intersection?.face) return;
         const { face, point } = intersection;
-        // 掴む3頂点だけを既存の格子から読み、全頂点のVector3配列を複写しない。
+        // レイが当たった面の3頂点を読み、掴む点を選ぶ。
         const nearest = [face.a, face.b, face.c].toSorted(
           (a, b) =>
             target.fromBufferAttribute(positions, a).distanceToSquared(point) -
@@ -56,7 +56,7 @@ export function createClothControls(
     },
     { eventOptions: { capture: true }, pointer: { buttons: -1, keys: false } },
   );
-  // 掴めるカーソルはCSSの:activeに任せ、ホバーだけのレイ判定を行わない。
+  // 掴むカーソルは、CSSの:activeで表示する。
   // ドラッグを解除し、入力イベントと視点操作を破棄する。
   onCleanup(signal, () => {
     physics.releaseGrab(true);

@@ -101,7 +101,7 @@ export async function createTiledTransition(
 
   function paint() {
     if (paintFrame) return;
-    // paintの処理中にGPU画像を作り直さず、最新の記録を次の描画で使う。
+    // paintの最新記録を、次の描画フレームでGPU画像へ転送する。
     paintFrame = requestAnimationFrame(() => {
       paintFrame = 0;
       if (textureSizeChanged) {
@@ -122,7 +122,7 @@ export async function createTiledTransition(
   }
 
   function render() {
-    // リサイズ直後の描画で、古いHTML記録を新しいGPU寸法へ転送しない。
+    // リサイズ後のHTML記録とGPU寸法が揃った時点で描画する。
     if (textureSizeChanged) return;
     renderer.render(scene, camera);
   }
@@ -158,7 +158,7 @@ export async function createTiledTransition(
     }
   }
   observeSize(container, resize, signal);
-  // 元HTMLの最初のpaintまで済ませ、空のテクスチャで遷移を始めない。
+  // 元HTMLの初回paintを待ち、転送済みのテクスチャで遷移を始める。
   await capture.painted;
   signal.throwIfAborted();
   return { transitionTo, scrollTo };

@@ -8,7 +8,7 @@ export async function createSVGTextures(
   signal: AbortSignal,
   render: () => void,
 ) {
-  // 埋め込んだJPEG XLとスタイルを再利用し、スクロールのたびに素材を取得し直さない。
+  // 埋め込んだJPEG XLとスタイルを再利用し、背面画像の更新に使う。
   const context = await createContext(source, {
     scale: devicePixelRatio,
     fetch: { requestInit: { signal }, placeholderImage: "" },
@@ -50,7 +50,7 @@ export async function createSVGTextures(
   }
 
   function refresh() {
-    // SVG化を並列に走らせず、処理中の連続スクロールは最新の位置にまとめる。
+    // SVG化は一回ずつ実行し、連続スクロールを最新の位置へまとめる。
     dirty = true;
     if (!capturing && !frame) {
       frame = requestAnimationFrame(async () => {

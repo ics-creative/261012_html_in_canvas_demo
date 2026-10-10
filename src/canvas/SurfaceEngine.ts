@@ -41,7 +41,7 @@ export async function createSurfaceEngine(
   const floorMaterial = own(signal, new THREE.MeshStandardNodeMaterial().copy(floor.material));
   floorMaterial.roughness = 0.08;
   floorMaterial.metalness = 0.8;
-  // 環境画像の白い照明を重ねず、実際の布の鏡像を見せる。
+  // 床の反射には、実際の布の鏡像を描く。
   floorMaterial.envNode = vec3(0);
   floorMaterial.emissiveNode = reflection.mul(0.8);
   floor.material = floorMaterial;
@@ -56,7 +56,7 @@ export async function createSurfaceEngine(
   >;
   const picking = scene.getObjectByName("Picking") as THREE.Mesh<THREE.PlaneGeometry>;
   cloth.material.map = textures[0];
-  // 床の遠景用フォグを布へ掛けず、縦長画面やズームアウトでも誌面を消さない。
+  // フォグは床の遠景に適用し、布の誌面は元のコントラストを保つ。
   cloth.material.fog = false;
   const initialPose = new Float32Array(picking.geometry.getAttribute("position").array);
   const physics = await createClothSimulation(initialPose, signal);
@@ -73,11 +73,11 @@ export async function createSurfaceEngine(
     zoom: [1, 1.6],
     position: (distance) => camera.position.set(0, 0, distance),
   });
-  // 表示交換のスナップショットに、空のHTMLテクスチャを渡さない。
+  // HTMLテクスチャの初回描画を待ち、表示交換用の画面を準備する。
   await painted;
   signal.throwIfAborted();
   renderer.render(scene, camera);
-  // 2秒は重力も進めず平面を保ち、その後に風圧を滑らかに立ち上げる。
+  // 導入の2秒間は平面のまま表示し、その後に風圧を滑らかに立ち上げる。
   const intro = gsap.timeline().to(wind, { strength: 1, duration: 2, ease: "sine.inOut" }, 2);
   // 待機中に掴んだときは、その場で物理を始めて入力へ応答する。
   host.addEventListener(
@@ -92,7 +92,7 @@ export async function createSurfaceEngine(
     const delta = lastFrame ? (now - lastFrame) / 1000 : 0;
     lastFrame = now;
     orbit.update();
-    // 新しい姿勢だけGPUへ送り、未更新の格子を繰り返し計算・転送しない。
+    // 受信した新しい姿勢を、描画格子とGPUへ反映する。
     if (wind.strength && physics.update(delta, wind.strength)) {
       updateGeometry(physics.interpolatedPositions);
     }

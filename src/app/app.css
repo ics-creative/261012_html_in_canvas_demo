@@ -97,7 +97,7 @@ canvas {
 }
 
 #root {
-  /* ヘッダーの実寸を引いた残りを描画領域にし、個別の高さ計算を持たない。 */
+  /* Gridの残りの高さを描画領域へ割り当て、ヘッダーの実寸に合わせる。 */
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   height: 100dvh;
@@ -131,7 +131,7 @@ canvas {
     /* 現在のリンクを基準に、ピルの座標と大きさをCSSだけで追従させる。 */
     &::after {
       content: "";
-      /* navのスクロール領域に切られず、スプリングの行き過ぎまで描く。 */
+      /* ピルを固定配置で描き、スプリングの行き過ぎまで表示する。 */
       position: fixed;
       z-index: -1;
       position-anchor: var(--current-demo);
@@ -206,7 +206,7 @@ canvas {
       color: var(--accent);
     }
 
-    /* 描画領域のIDは表示中のデモを示し、準備中の画面は選ばれない。 */
+    /* 描画領域のIDに合わせ、表示中のデモを現在地として示す。 */
     &:target-current {
       color: var(--paper);
 

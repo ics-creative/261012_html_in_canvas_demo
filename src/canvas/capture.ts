@@ -17,7 +17,7 @@ export function createHTMLCapture(
   const context = canvas.getContext("2d") as PaintContext;
 
   function paint() {
-    // 非表示やレイアウト変更中の空Canvasは転送せず、次のサイズ確定後に描画する。
+    // 幅と高さがあるCanvasを転送し、レイアウト変更後の寸法へ合わせる。
     if (!canvas.width || !canvas.height) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.drawElementImage(source, 0, 0, canvas.width, canvas.height);

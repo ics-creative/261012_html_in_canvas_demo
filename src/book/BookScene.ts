@@ -24,7 +24,7 @@ export async function createBookScene(
   ready: Promise<void>,
   onChange: (spread: number, turning: boolean) => void,
 ) {
-  // シーン素材・紙の繊維・GPUは依存しないため、まとめて読み込む。
+  // シーン素材・紙の繊維・GPUを、並列で読み込む。
   const [renderer, scene, paperGrain] = await Promise.all([
     createRenderer(host, signal, canvas),
     loadSceneAsset("images/book/scene.json", signal),
@@ -38,17 +38,17 @@ export async function createBookScene(
 
   // シーン素材は天板・表紙・紙束の静的形状と照明を保存し、角丸も事前に計算する。
   // 低い斜光で紙の湾曲を照らし、めくる紙の影を下の誌面へ落とす。
-  // VSMの半精度モーメントへ深度が偏らないよう、本を含む範囲まで絞る。
+  // VSMの深度精度を保つため、光源の描画範囲を本の周囲へ絞る。
   // VSMの二方向ぼかしで投影の縁を柔らかくし、接地の濃さはGTAOで残す。
   // 天板の上面を本の底へ合わせ、有限の厚みと丸い端部を見せる。
-  // 木目の法線と表紙の布目を強め、塗膜を使わないマットなウォールナットにする。
-  // 背は紙の綴じ目の下へ納め、金属棒のような円柱の反射を出さない。
+  // 木目の法線と表紙の布目を強め、マットなウォールナットの質感をつける。
+  // 背は紙の綴じ目の下へ納め、表紙に続く本の輪郭をつくる。
   const world = createBookWorld(renderer, scene, signal);
-  // フォントと写真を読み終えてからHTMLTextureを作り、後から初期状態を修復しない。
+  // フォントと写真の読み込みを待ち、完成したHTMLからHTMLTextureを作る。
   await ready;
   signal.throwIfAborted();
   // 縮小しても残る繊維の凹凸と漉きむら、布の織り目は静的素材を全誌面で共有する。
-  // 凹凸と粗さに使うグレースケール素材には色変換をかけない。
+  // 凹凸と粗さのグレースケール素材は、読み込んだ数値をそのまま使う。
   paperGrain.wrapS = paperGrain.wrapT = THREE.RepeatWrapping;
   paperGrain.repeat.set(2, 2);
   paperGrain.flipY = false;
@@ -72,7 +72,7 @@ export async function createBookScene(
   let spread = 0;
   const turn = { spread: 0, progress: 0, corner: 0 };
   let grabbed: ReturnType<typeof pageHit> = null;
-  // 指への追従はGSAP、離したときの速度はジェスチャーへ任せ、別の時計や補間を持たない。
+  // 指への追従はGSAPで補間し、離したときの速度はジェスチャーから読む。
   const followDrag = gsap.quickTo(turn, "progress", {
     duration: 0.12,
     ease: "power2.out",
@@ -244,7 +244,7 @@ export async function createBookScene(
       if (event.button !== 2 && !event.ctrlKey) return;
       hitTarget.move(pageHit(event)?.text ?? null, event);
     }
-    // ブラウザーの標準メニューはそのまま開き、OrbitControlsへは渡さない。
+    // 右クリックはブラウザーの標準メニューへ渡す。
     event.stopImmediatePropagation();
   }
 

@@ -12,7 +12,7 @@
   overflow-y: scroll;
   overscroll-behavior: contain;
 
-  /* 幅を明示するとmacOSでもオーバーレイ式にならず、常時表示される。 */
+  /* 幅を明示し、macOSでも常時表示する。 */
   &::-webkit-scrollbar {
     width: var(--scrollbar-size);
   }

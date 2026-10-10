@@ -15,7 +15,7 @@ export async function createPixi(host: HTMLElement, signal: AbortSignal) {
   onCleanup(signal, () => {
     // 演出を先に停止し、後続のテクスチャ解放より前にGPUの参照を外す。
     queueMicrotask(() => {
-      // 親のバッチを先に解放し、キャッシュ画像を持つ子の破棄時に購読を残さない。
+      // 親のバッチを先に解放し、キャッシュ画像を持つ子の購読を順に外す。
       const children = stage.removeChildren();
       stage.destroy();
       for (const child of children) child.destroy({ children: true });

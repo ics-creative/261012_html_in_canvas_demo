@@ -28,8 +28,8 @@ export function createHTMLHitTarget(
   const source = new Matrix3();
   const screen = new Matrix3();
   const vertex = new Vector3();
-  // 翻訳によるTextノードの変更も標準paintへ届くため、別の変更監視は置かない。
-  // 文字座標を保持せず、ブラウザーに選択を任せる。
+  // 翻訳によるTextノードの変更は、標準paintで描画へ反映する。
+  // 文字座標と選択範囲の管理は、ブラウザーへ任せる。
 
   const clear = () => {
     if (canvas.contains(selection.anchorNode)) selection.removeAllRanges();

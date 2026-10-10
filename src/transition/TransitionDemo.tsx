@@ -48,7 +48,7 @@ function TransitionViewport({
           setDisplayed(index);
           setAnimating(false);
         });
-        // Canvasで出現済みのMVを完了位置へ揃え、HTMLに戻った際に再び隠さない。
+        // Canvasで出現済みのMVを、元HTMLの完了位置へ合わせる。
         for (const heading of viewport.querySelectorAll(".page-copy h2")) {
           for (const animation of heading.getAnimations({ subtree: true })) animation.finish();
         }

@@ -54,7 +54,7 @@ export async function createCRTDisplay(
   stage.filterArea = renderer.screen;
   for (const filter of filters) {
     filter.resolution = "inherit";
-    // 元HTMLの文字は既にアンチエイリアス済みなので、中間画像のMSAAは不要。
+    // 中間画像のアンチエイリアスは、元HTMLの文字描画を引き継ぐ。
     filter.antialias = "off";
   }
   renderer.canvas.style.visibility = "hidden";
@@ -67,7 +67,7 @@ export async function createCRTDisplay(
 
   function toggleEffects() {
     for (const filter of filters) filter.enabled = effects.checked;
-    // 発光もキャッシュから外し、OFFでフィルターのないフォームへ戻す。
+    // 発光を含むキャッシュを更新し、OFF時は元のフォームを表示する。
     cached.updateCacheTexture();
   }
 
@@ -169,7 +169,7 @@ export async function createCRTDisplay(
       cached.updateCacheTexture();
     }
     render();
-    // フィルターが借りた画像を描画後に外し、リサイズ時のプール破棄に参照を残さない。
+    // フィルターが借りた画像の参照を描画後に外し、プールの寿命へ合わせる。
     crt.groups[0].setResource(Texture.EMPTY.source, 1);
     crt.groups[0].setResource(Texture.EMPTY.source.style, 2);
     bloom.resources.uMapTexture = Texture.EMPTY.source;

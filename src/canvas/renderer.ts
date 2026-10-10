@@ -12,7 +12,7 @@ export async function createRenderer(
   renderer.library = new THREE.StandardNodeLibrary();
   await renderer.init();
   onCleanup(signal, () => {
-    // 並列読み込みの完了順によらず、シーンの素材を解放してからGPUを閉じる。
+    // 終了時は、シーンの素材を解放してからGPUを閉じる。
     renderer.setAnimationLoop(null);
     queueMicrotask(() => renderer.dispose());
     // Reactが持つCanvasは再初期化でも残し、ここで作った描画先だけを削除する。

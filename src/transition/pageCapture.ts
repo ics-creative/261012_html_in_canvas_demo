@@ -1,4 +1,4 @@
-/** 表示中の領域だけを描画し、長いHTML全体をGPU画像にしない。 */
+/** 表示中の領域だけを描画し、スクロール位置とCanvasの寸法を揃える。 */
 export function createPageCapture(canvases: HTMLCanvasElement[]) {
   // Three.jsが元HTMLを描画Canvasへ移す前に、寸法とスクロールの操作先を保持する。
   const sources = canvases.flatMap((canvas) =>

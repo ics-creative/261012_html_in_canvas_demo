@@ -7,7 +7,7 @@ export default defineConfig({
   base: "./",
   plugins: [react()],
   resolve: {
-    // 配布用の単一ファイルではなく公式のES Modulesを分割し、CoreとTSLを共有する。
+    // 公式のES Modulesを分割し、CoreとTSLを各デモで共有する。
     alias: [
       { find: /^three$/, replacement: "three/src/Three.Core.js" },
       { find: /^three\/webgpu$/, replacement: "three/src/Three.WebGPU.js" },

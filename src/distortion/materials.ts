@@ -49,7 +49,7 @@ export function createBackgroundNode(from: THREE.Texture, to: THREE.Texture) {
   return { color, motion };
 }
 
-/** 時間で変わらない風の勾配を一度描き、各文字面で共有する。 */
+/** 静的な風の勾配を一度描き、各文字面で共有する。 */
 export function createFlowField() {
   const field = TSL.uv().mul(16).sub(4);
   const noise = (x: number, y: number) => TSL.mx_noise_float(field.add(TSL.vec2(x, y)));
@@ -57,7 +57,7 @@ export function createFlowField() {
     noise(0, 0.04).sub(noise(0, -0.04)),
     noise(-0.04, 0).sub(noise(0.04, 0)),
   ).div(0.08);
-  // ノイズの再計算を頂点ごと・フレームごとに行わず、滑らかに補間して読む。
+  // ノイズ画像を全頂点・全フレームで共有し、滑らかに補間して読む。
   return TSL.rtt(TSL.vec4(curl, 0, 1), 256, 256, { autoUpdate: false, depthBuffer: false });
 }
 
@@ -74,21 +74,21 @@ export function createForegroundMaterial(
     seed: TSL.uniform(0),
   };
   const { entry, exit, wind, seed } = motion;
-  // 見出しと説明文の間の空白で進捗をつなぐ。文字単位に分割せずHTML面を流す。
+  // 見出しと説明文の間の空白で進捗をつなぎ、HTML面全体を流す。
   const heading = TSL.uv().y.smoothstep(0.46, 0.5);
   const arrival = TSL.mix(entry.y, entry.x, heading);
   const departure = TSL.mix(exit.y, exit.x, heading);
   const distance = departure.mul(0.8).sub(arrival.oneMinus().mul(0.6));
   const displaced = TSL.Fn(() => {
     const point = TSL.positionLocal.xy.div(height).toVar();
-    // ノイズの勾配に直交する流れを積分する。単なる面の回転ではなく、
-    // 隣り合う点が異なる速さで流れ、文字の太さ・輪郭まで粘性のある筋へ伸びる。
+    // ノイズの勾配に直交する流れを積分し、各点の位置を更新する。
+    // 隣り合う点の流速差で、文字の太さ・輪郭を粘性のある筋へ伸ばす。
     TSL.Loop(8, () => {
       const field = point.mul(1.6).add(seed.mul(8));
       const curl = flow.sample(field.add(4).div(16)).xy;
       const across = TSL.vec2(wind.y, wind.x.negate());
       // 渦の横方向は残し、流れに沿う速さは正に保って右下→左上へ運ぶ。
-      // 移動距離は保ち、流速差と横の渦だけを抑えて文字の輪郭を崩しすぎない。
+      // 移動距離を保ち、流速差と横の渦を弱めて文字の輪郭を整える。
       const along = curl.dot(wind).mul(0.08).clamp(-0.08, 0.08).add(1);
       const velocity = wind.mul(along).add(across.mul(curl.dot(across)).mul(0.2));
       point.addAssign(velocity.mul(distance.div(8)));
@@ -107,14 +107,14 @@ export function createForegroundMaterial(
     arrival.oneMinus().smoothstep(0.08, 0.8),
   );
   const radius = melting.mul(devicePixelRatio);
-  // 中間画像の面積を減らし、カーネルの幅は保つ。粗い間隔で読む縞を作らない。
-  // RGBとアルファを同じ重みでぼかす。乗算済みの色を加算発光せず通常合成する。
+  // 中間画像の面積を減らし、広いカーネルで輪郭を滑らかにぼかす。
+  // RGBとアルファを同じ重みでぼかし、乗算済みの色を通常合成する。
   const blur = gaussianBlur(source, radius, 16, {
     premultipliedAlpha: true,
   });
-  // 静止時は原寸のHTMLを読み、ぼかし用の縮小画像を着地の文字へ残さない。
+  // 静止時は原寸のHTMLを読み、着地した文字の解像度へ戻す。
   const pixel = TSL.mix(image, blur, melting.smoothstep(0, 0.16));
-  // 面ごとの移動へ連動させ、退場のぼかしを到着した文字へ掛けない。
+  // 面ごとの移動に合わせ、退場と入場それぞれのぼかしを制御する。
   const material = new THREE.MeshBasicNodeMaterial({
     side: THREE.DoubleSide,
     forceSinglePass: true,

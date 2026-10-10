@@ -1,7 +1,7 @@
 /** 初回とサイズ変更時に描画寸法を揃え、画面の離脱で監視を止める。 */
 export function observeSize(host: HTMLElement, resize: () => void, signal: AbortSignal) {
   function update() {
-    // レイアウト変更中の高さ0ではGPU画像を作れないため、寸法の確定を待つ。
+    // レイアウト変更後に幅と高さが確定した時点で、描画寸法を更新する。
     if (host.clientWidth && host.clientHeight) resize();
   }
 

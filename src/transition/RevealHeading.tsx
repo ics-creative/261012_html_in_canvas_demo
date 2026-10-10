@@ -5,7 +5,7 @@ export function RevealHeading({ text, tag: Heading = "h3" }: { text: string; tag
   let offset = 0;
 
   return (
-    // 誌面ごとにトリガーを登録し直し、前の文字の再生状態を持ち越さない。
+    // 誌面ごとにトリガーを登録し直し、新しい文字を初回の状態から再生する。
     <Heading key={text} className="reveal-heading">
       {text.split(" ").map((word) => {
         const start = offset;
@@ -13,7 +13,7 @@ export function RevealHeading({ text, tag: Heading = "h3" }: { text: string; tag
         return (
           <Fragment key={start}>
             {start > 0 && " "}
-            {/* 単語の途中で改行せず、空白も通常のHTMLテキストとして残す。 */}
+            {/* 単語を一つの要素へまとめ、空白は通常のHTMLテキストとして残す。 */}
             <span className="reveal-word" data-offset={start}>
               {Array.from(word, (character, index) => (
                 <span className="reveal-mask" key={index}>

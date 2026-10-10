@@ -17,15 +17,15 @@ export function createBookWorld(renderer: THREE.Renderer, scene: THREE.Scene, si
   scene.environment = own(signal, createEnvironment(renderer, 256)).texture;
 
   // 深度と法線から紙の重なり・背・接地面を遮蔽し、間接光だけに反映する。
-  // GTAOは深度を直接参照するため、この前処理にはMSAAを使わない。
+  // GTAOへ渡す深度を単一サンプルで取得する。
   const normals = own(signal, TSL.pass(scene, camera, { samples: 0 }).setResolutionScale(0.5));
-  // 法線の前処理では照明・SSS・影を計算せず、専用の軽い素材を共有する。
+  // 法線の前処理は、専用の軽い素材を共有する。
   normals.overrideMaterial = own(
     signal,
     new THREE.MeshBasicNodeMaterial({ side: THREE.DoubleSide }),
   );
   normals.setMRT(TSL.mrt({ output: TSL.normalView }));
-  // 色の描画からAOを継承させず、法線パスが自身の深度・出力を読む循環を防ぐ。
+  // 法線パスのAOを白に固定し、色の描画とは別に深度と法線を取得する。
   normals.contextNode = TSL.builtinAOContext(TSL.float(1));
   const normal = normals.getTextureNode();
   const depth = normals.getTextureNode("depth");
@@ -36,7 +36,7 @@ export function createBookWorld(renderer: THREE.Renderer, scene: THREE.Scene, si
   occlusion.samples.value = 24;
   const filtered = own(signal, denoise(occlusion.getTextureNode(), depth, normal, camera));
   filtered.radius.value = 8;
-  // 平滑化は独立した画面で済ませ、紙のUVではなく画面座標から参照する。
+  // 平滑化したAOを独立した画像へ描き、画面座標から参照する。
   const filteredTexture = own(signal, TSL.convertToTexture(filtered));
   // AOの前処理だけを追加し、最終描画と解放は共通のRendererとsignalへ任せる。
   renderer.contextNode = TSL.builtinAOContext(filteredTexture.sample(TSL.screenUV).r);

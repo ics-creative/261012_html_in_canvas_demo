@@ -4,7 +4,7 @@ import { splitPolygon, type Vertex } from "./splitPolygon";
 
 const SHOT_COUNT = 48;
 const MAX_PIECES = 512;
-// 火花の重なりで断片の輪郭を隠さず、レーザー線を主役にする。
+// 火花の数を抑え、レーザー線と断片の輪郭を見せる。
 const MAX_SPARKS = 128;
 const SPARK_DRAG = 6;
 const IMPACTS: Partial<Record<number, number>> = { 1: 16, 16: 20, 40: 24 };
@@ -15,7 +15,7 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
   const view = new Container();
   const paper = new Container();
   const lights = new Container();
-  // 通常合成の芯を最後にまとめ、火花ごとの合成切り替えを避ける。
+  // 通常合成の芯を最後にまとめ、合成モードごとの描画順を揃える。
   const sparkCores = new RenderLayer();
   const timeline = gsap.timeline({ paused: true });
   const sparks = new Set<Container>();
@@ -84,7 +84,7 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
       const streak = Math.random() < 0.4;
       const speed = streak ? 480 + Math.random() * 480 : 160 + Math.random() * 320;
       const drift = (Math.random() - 0.5) * speed * 0.2;
-      // 断面の頂点順に左右されず、ビームの進行方向へ細い火花を流す。
+      // ビームの進行方向を基準に、細い火花を流す。
       const vx = direction.x * speed - direction.y * drift;
       const vy = direction.y * speed + direction.x * drift;
       const x = start.x + (end.x - start.x) * distance;
@@ -118,7 +118,7 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
           y: y + (vy * (1 - decay)) / SPARK_DRAG,
           ease: (progress) => (1 - Math.exp(-SPARK_DRAG * life * progress)) / (1 - decay),
         })
-        // 減速しても芯は潰さず、最後のフェードまで微粒子を保つ。
+        // 減速中も芯の太さを保ち、最後のフェードまで微粒子を見せる。
         .to(spark.scale, { x: streak ? 0.4 : 1, ease: "expo.out" }, 0)
         // 減速して残る時間を見せ、明るさは後半に落とす。
         .to(spark, { alpha: 0, ease: "power2.in" }, 0);
@@ -199,7 +199,7 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
       .call(
         () => {
           slice(start, end, at + 0.08);
-          // 48発を3回の衝撃にまとめ、個々の線ではカメラを揺らさない。
+          // 48発の連射を、3回のカメラへの衝撃にまとめる。
           const strength = IMPACTS[index + 1];
           if (strength) onImpact(strength);
         },
@@ -231,7 +231,7 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
       const at = index === 0 ? 0 : Math.sqrt((index + Math.random() * 0.8) / SHOT_COUNT) * 1.2;
       fire(index, at, onImpact);
     }
-    // 断面が離れた余韻を残してから、縮小・個別フェードをせず同じ瞬間に消す。
+    // 断面が離れた余韻を残してから、全ての断片を同じ瞬間に消す。
     timeline.call(clear, [], 2.4);
     return timeline;
   }
@@ -243,7 +243,7 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
   }
 
   function resize(nextWidth: number, nextHeight: number) {
-    // 切断途中でも全領域へ追従し、ポリゴンを作り直して演出を巻き戻さない。
+    // 進行中のポリゴンを全体で拡縮し、リサイズ後の画面へ合わせる。
     view.scale.set(nextWidth / width, nextHeight / height);
   }
 

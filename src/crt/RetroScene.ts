@@ -28,7 +28,7 @@ export async function createRetroScene(
   const screen = scene.getObjectByName("screen");
   if (!(screen instanceof THREE.Mesh) || !(screen.material instanceof THREE.MeshBasicNodeMaterial))
     throw new Error("CRTの画面がありません。");
-  // CRTらしさはガラスの曲率に留め、HTMLの表示へノイズやグリッチを重ねない。
+  // CRTらしさは、画面ガラスの曲率で表現する。
   screen.material.map = textures[0];
   const orbit = createOrbit(camera, host, signal);
   orbit.target.set(0, 2.4, -0.4);
@@ -51,7 +51,7 @@ export async function createRetroScene(
   orbit.addEventListener("change", target.hide);
 
   function hit(event: MouseEvent): HTMLPoint | null {
-    // 筐体の向こう側に隠れた画面へは入力を通さない。
+    // 筐体より手前に見える画面を、入力の対象にする。
     const point = aim(event).intersectObject<THREE.Mesh>(scene, true)[0];
     if (point?.object !== screen || !point.uv || !point.face) return null;
     return {
@@ -81,7 +81,7 @@ export async function createRetroScene(
         target.move(point, event);
         if (type === "pointerdown") press.set(event.clientX, event.clientY);
         // 画面上のドラッグは選択へ渡し、筐体と背景だけで視点を回す。
-        // 右クリックはOrbitControlsへ渡さず、ブラウザーの標準メニューを開く。
+        // 右クリックは、ブラウザーの標準メニューを開く。
         if (point || type === "contextmenu") event.stopImmediatePropagation();
       },
       { capture: true, signal },
@@ -90,7 +90,7 @@ export async function createRetroScene(
   host.addEventListener(
     "pointerup",
     (event) => {
-      // ダブルクリックの単語選択は変えず、ドラッグした終点だけを曲面へ合わせる。
+      // ダブルクリックは標準の単語選択へ任せ、ドラッグの終点を曲面へ合わせる。
       if (event.button === 0 && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 4) {
         target.finish(hit(event), event);
       }

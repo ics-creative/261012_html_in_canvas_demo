@@ -3,7 +3,7 @@ import * as THREE from "three";
 // 物理格子を縦横4分割し、計算量を抑えても描画の192×120分割を保つ。
 const SUBDIVISIONS = 4;
 
-// 各描画頂点の補間先は変形によらないため、バッファの参照を一度だけ用意する。
+// 各描画頂点の補間先を、格子の位置から一度だけ計算する。
 function createSampler(segments: number, stride: number, target: Float32Array) {
   const values = new Float32Array((segments + 3) * stride);
   const samples = new THREE.CubicInterpolant(
@@ -24,7 +24,7 @@ function createSampler(segments: number, stride: number, target: Float32Array) {
       samples.resultBuffer = targets[index];
       const value = samples.evaluate(point);
       const start = Math.floor(point) * stride;
-      // 補間が両端の範囲を越えないようにし、鋭い折れや床付近の突き抜けを防ぐ。
+      // 端の補間範囲を制限し、床付近まで滑らかな曲面をつなぐ。
       if (bounded)
         for (let axis = 0; axis < stride; axis++) {
           const a = values[start + axis];
@@ -48,7 +48,7 @@ export function createClothGeometry(geometry: THREE.PlaneGeometry, picking: THRE
     createSampler(rows, width * 3, geometry.getAttribute(name).array as Float32Array),
   );
   geometry.boundingSphere = picking.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1500);
-  // 既定のusageとneedsUpdateで、影パスや同じ姿勢への頂点の重複転送を避ける。
+  // needsUpdateで更新をまとめ、同じ頂点バッファを描画と影パスで共有する。
 
   /** 物理格子から、描画用の位置・法線とヒット判定用の格子を更新する。 */
   function update(positions: Float32Array) {

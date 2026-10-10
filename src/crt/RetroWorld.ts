@@ -17,17 +17,17 @@ export function createRetroWorld(
   camera: THREE.PerspectiveCamera,
   signal: AbortSignal,
 ) {
-  // フォグを通した床の暗さへ背景を合わせ、平面の終端を見せない。
+  // フォグを通した床の暗さへ背景色を合わせ、遠景をつなぐ。
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
   scene.environment = own(signal, createEnvironment(renderer, 256)).texture;
   // 後傾した前面と丸い下腹を持つ、無彩色のiMac G3風CRT筐体を素材から読む。
   // 前面全体を後傾させ、入力の投影座標も画面とベゼルの傾きへ合わせる。
-  // 背面へ向かって断面を楕円へ丸める。下腹を残し、箱型や対称の半球にしない。
+  // 背面へ向かって断面を楕円へ丸め、筐体の下腹にふくらみを残す。
   // 厚い下部にCDスロットと左右の丸いスピーカーを収める。
-  // 開口部を画面より広くし、ベゼルの厚みでメニューバーを覆わない。
-  // スピーカーにも浅い曲面を持たせ、平坦な黒丸にしない。
-  // 筐体の下に低い脚だけを置き、独立した大きな台座をなくす。
+  // 開口部を画面より広くし、メニューバーまで見える余白をベゼルへ取る。
+  // スピーカーにも浅い曲面を持たせ、正面から見た凹凸をつける。
+  // 筐体の下へ低い脚を置き、本体を床から支える。
   // 渡された画面テクスチャは所有者に任せ、筐体の共有素材を一度だけ解放する。
   const materials = new Map<THREE.Material, THREE.NodeMaterial>();
   scene.traverse((object) => {
@@ -38,11 +38,11 @@ export function createRetroWorld(
       material = own(signal, renderer.library.fromMaterial(object.material));
       materials.set(object.material, material);
       if (material instanceof THREE.MeshBasicNodeMaterial) {
-        // 発光する画面は、筐体のトーンマッピングや間接光の遮蔽を受けない。
+        // 画面の発光は、HTMLの色をそのまま出力する。
         material.contextNode = TSL.builtinAOContext(TSL.float(1));
       } else material.outputNode = TSL.output.toneMapping(THREE.AgXToneMapping);
       if (material instanceof THREE.MeshPhysicalNodeMaterial) {
-        // 成形樹脂の微細な粗さだけを変え、反射を均一な鏡面にしない。
+        // 成形樹脂の粗さに細かな変化をつけ、表面の反射へむらを出す。
         // 粗さの基準値を素材から読み、前面と背面で同じシェーダーを共有する。
         material.roughnessNode = materialRoughness.add(
           mx_noise_float(positionLocal.mul(128)).mul(0.04),
@@ -58,9 +58,9 @@ export function createRetroWorld(
   key.shadow.autoUpdate = false;
   key.shadow.needsUpdate = true;
 
-  // 半解像度のGTAOを平滑化し、直射光やHTML画面を暗くせず間接光だけへ適用する。
+  // 半解像度のGTAOを平滑化し、間接光の遮蔽として適用する。
   const normals = own(signal, TSL.pass(scene, camera, { samples: 0 }).setResolutionScale(0.5));
-  // 法線だけが必要な前処理で、面光源・樹脂の反射・影を重ねて計算しない。
+  // 法線の前処理は専用の軽い素材を共有し、形状の情報を描く。
   normals.overrideMaterial = own(signal, new THREE.MeshBasicNodeMaterial());
   normals.setMRT(TSL.mrt({ output: TSL.normalView }));
   normals.contextNode = TSL.builtinAOContext(TSL.float(1));

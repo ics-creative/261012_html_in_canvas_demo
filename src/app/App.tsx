@@ -4,7 +4,7 @@ import { DemoViewport } from "./DemoViewport";
 import "./app.css";
 import "./scrollbar.css";
 
-// 表示するデモだけを読み込み、Three.jsとPixiJSを初回の共通JSへまとめない。
+// デモごとのJSを遅延読み込みし、Three.jsとPixiJSは使用する画面で読み込む。
 const CanvasStage = lazy(async () => ({
   default: (await import("../canvas/CanvasStage")).CanvasStage,
 }));

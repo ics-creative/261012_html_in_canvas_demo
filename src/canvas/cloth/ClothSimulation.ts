@@ -22,7 +22,7 @@ export async function createClothSimulation(initialPose: Float32Array, signal: A
   let pending = false;
   let updated = false;
 
-  // 計算中は次の更新を溜めず、完了した姿勢だけを受け取る。
+  // 更新は一回ずつ送り、完了した姿勢を受け取る。
   async function receive(time: number, wind: number) {
     pending = true;
     elapsed = 0;
@@ -36,7 +36,7 @@ export async function createClothSimulation(initialPose: Float32Array, signal: A
     update(delta: number, wind: number) {
       elapsed += delta;
       if (!pending) receive(elapsed, wind);
-      // GPUへの転送は受信した姿勢につき一度にし、視点だけの描画では再送しない。
+      // 受信した姿勢を一度GPUへ転送し、視点の描画でも同じ頂点を使う。
       const changed = updated;
       updated = false;
       return changed;

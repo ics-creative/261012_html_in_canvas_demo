@@ -35,7 +35,7 @@ export async function createGlassScene(
     position.value.set(controls.offsetLeft, controls.offsetTop);
     page.style.setProperty("--page-width", `${width}px`);
     page.style.setProperty("--page-height", `${height}px`);
-    // CSS変形は描画元を変えず、元HTMLの入力・選択領域だけを画面と揃える。
+    // 描画元の解像度を保ち、CSSの拡縮でHTMLの入力・選択領域を画面へ合わせる。
     if (!svg) {
       source.style.width = `${width * devicePixelRatio}px`;
       source.style.height = `${height * devicePixelRatio}px`;
@@ -43,7 +43,7 @@ export async function createGlassScene(
     }
   };
 
-  // HTMLの寸法を確定してから初回転送し、低解像度の画像で初期化しない。
+  // HTMLの寸法を確定してから、端末の解像度で初回の画像を転送する。
   resize();
   const { textures, painted, refresh } = svg
     ? await createSVGTextures(page, signal, requestRender)
@@ -77,17 +77,17 @@ export async function createGlassScene(
       { depthBuffer: false },
     ),
   );
-  // 縮小mipmapの拡大でぼかさず、標準のガウスぼかしで階段状の輪郭をなくす。
+  // 標準のガウスぼかしを使い、輪郭を滑らかにする。
   const blur = own(signal, gaussianBlur(cropped, devicePixelRatio, 4));
   const refracted = screenUV.mul(viewport).sub(offset);
   const sharp = texture(textures[0], refracted.div(viewport).flipY());
-  // ぼかしのRenderTargetは上端が原点。元画像用のY反転を重ねない。
+  // ぼかしのRenderTargetは上端を原点として、画面と同じY方向で参照する。
   const soft = blur.getTextureNode().sample(refracted.sub(cropPosition).div(cropSize));
   // 縁の屈折は鮮明に、中央の散乱は滑らかにつなぐ。
   const bent = mix(soft, sharp, edge);
   // AppleのRegularに倣い、薄い明色の層で文字のコントラストを面全体に揃える。
   const body = mix(bent.rgb, vec3(1), 0.2);
-  // 白い反射面を重ねず、方向に応じた細い縁だけで厚みを見せる。
+  // 方向に応じた細い縁で、ガラスの厚みを見せる。
   const rim = distance.negate().smoothstep(0, 2).oneMinus();
   const light = direction.dot(vec2(-0.6, -0.8));
   const glass = mix(body, vec3(1), rim.mul(light.clamp()).mul(0.2));
@@ -102,17 +102,17 @@ export async function createGlassScene(
       toneMapped: false,
     }),
   );
-  // 全画面の一枚で合成し、カメラ・立体メッシュ・環境マップを持たない。
+  // 全画面のQuadMesh一枚で、背景とガラスを合成する。
   const quad = new THREE.QuadMesh(material);
 
   function requestRender() {
-    // paintを次の一描画にまとめ、ブラウザーのpaint中はGPUを更新しない。
+    // paintを次の描画フレームへまとめ、GPU画像の更新時点を揃える。
     if (!frame) frame = requestAnimationFrame(render);
   }
 
   function render() {
     frame = 0;
-    // 更新済みのHTMLだけを合成し、静止中は描画しない。
+    // HTMLの更新時に描画を予約し、変更済みの画像を合成する。
     quad.render(renderer);
   }
 
@@ -141,7 +141,7 @@ export async function createGlassScene(
     cancelAnimationFrame(frame);
     if (!svg) canvas.clearElementGeometry(source);
   });
-  // 初回のHTML paintを待ってから描き、空のテクスチャを表示完了としない。
+  // 初回のHTML paintと転送を完了してから、表示の準備完了を通知する。
   await painted;
   signal.throwIfAborted();
   requestRender();

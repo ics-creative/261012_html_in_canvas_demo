@@ -36,7 +36,7 @@ export function useCanvasScene<T>(
         }
         const ready = readHTML();
         const instance = await create(host.current!, signal, ready);
-        // paintイベントの途中で再描画せず、描画ループの最初のフレームを待つ。
+        // 最初の描画フレームを待ってから、表示準備の完了を通知する。
         await new Promise(requestAnimationFrame);
         signal.throwIfAborted();
         startInitialization(() => setScene(instance));

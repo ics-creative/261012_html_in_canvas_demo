@@ -56,7 +56,7 @@ export function createClothPhysics(initialPose: Float32Array) {
   let time = 0;
   let wind = 0;
   let releasePending = false;
-  // 初期静定の強い減衰を持ち込まず、衝撃後の往復運動を残す。
+  // 衝撃後の往復運動が続くよう、通常の減衰を適用する。
   const damping = Math.exp(-0.4 * STEP);
   const constraints: Constraint[] = [];
   const add = (a: number, b: number, length: number, softness: number) => {
@@ -89,13 +89,13 @@ export function createClothPhysics(initialPose: Float32Array) {
     wind = strength;
     accumulator += elapsed;
     while (accumulator + 1e-10 >= STEP) {
-      // 導入の静止時間を含めず、表示中の物理時間だけ進める。
+      // 表示中の物理時間を、固定刻みで進める。
       time += STEP;
       step();
       if (releasePending) releaseGrab(true);
       accumulator -= STEP;
     }
-    // 固定刻みの前後を補間し、高リフレッシュレートでも同じ姿勢を連続表示しない。
+    // 固定刻みの前後を補間し、描画フレームに合わせて姿勢を滑らかにつなぐ。
     particles.forEach((particle, index) => {
       delta
         .lerpVectors(particle.frame, particle, accumulator / STEP)
@@ -135,7 +135,7 @@ export function createClothPhysics(initialPose: Float32Array) {
     const grabbed = anchors[2];
     if (grabbed) {
       grabbed.weight = 1;
-      // 離した瞬間の入力速度をそのまま巨大な加速度に変えない。
+      // 掴んでいた点の前回位置を現在位置へ揃え、停止した状態で離す。
       grabbed.previous.copy(grabbed);
     }
     anchors.length = 2;
@@ -166,7 +166,7 @@ export function createClothPhysics(initialPose: Float32Array) {
     // 掴んでいる間は反復を増やし、細分化した布の局所的な伸びを抑える。
     const iterations = grabbed ? 12 : 8;
     for (let iteration = 0; iteration < iterations; iteration++) {
-      // 解く順序を交互に反転し、片側へ偏った引きつりを防ぐ。
+      // 制約を解く順序を交互に反転し、左右へ均等に張力を伝える。
       const forward = iteration % 2 === 0;
       for (let n = 0; n < constraints.length; n++) {
         const constraint = constraints[forward ? n : constraints.length - n - 1];
@@ -181,12 +181,12 @@ export function createClothPhysics(initialPose: Float32Array) {
         a.addScaledVector(delta, (-lambda * a.weight) / distance);
         b.addScaledVector(delta, (lambda * b.weight) / distance);
       }
-      // 固定点からの最大距離を制限し、圧縮やしわを妨げずに張力を伝える。
+      // 固定点からの最大距離を制限し、圧縮やしわを保ちながら張力を伝える。
       for (const position of particles) {
         const { tethers, weight } = position;
         if (!weight) continue;
         for (let anchor = 0; anchor < anchors.length; anchor++) {
-          // 掴む点からも張力を伝え、細かい格子の1点だけが伸びるのを防ぐ。
+          // 掴む点から周囲へ張力を伝え、格子全体の伸びを調整する。
           constrain(position, anchors[anchor], tethers[anchor]);
         }
         position.y = Math.max(floorY + 2, position.y);

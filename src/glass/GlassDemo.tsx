@@ -5,7 +5,7 @@ import type { HitCanvas } from "../canvas/HTMLHitTarget";
 import { createGlassScene } from "./GlassScene";
 import "./glass.css";
 
-// 指定されたJPEG XLを、変換せず写真一覧へ使う。
+// 指定されたJPEG XLを写真一覧へ使う。
 const photos = [
   { file: "P3335279", title: "Seine at dusk", caption: "Paris / River" },
   { file: "BF_06888", title: "Palace gallery", caption: "France / Interiors" },
@@ -17,7 +17,7 @@ const photos = [
   { file: "P3304136", title: "Stone facade", caption: "Paris / Architecture" },
 ];
 
-// 同じ8点を4周並べ、素材を増やさず縦スクロール中の屈折を見せる。
+// 同じ8点を4周並べ、縦スクロール中の屈折を見せる。
 const gallery = Array.from({ length: 4 }, () => photos).flat();
 
 /** 同じ写真一覧でCSS blur・HTML in Canvas・SVGの3方式を比較する。 */
@@ -29,7 +29,7 @@ export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg"
   const [host] = useCanvasScene(async (element, signal, ready) => {
     await ready;
     signal.throwIfAborted();
-    // CSS版は通常のDOMとbackdrop-filterだけで表示し、GPUを初期化しない。
+    // CSS版は通常のDOMとbackdrop-filterで描く。
     if (method === "css") return;
     if (!canvas.current || !page.current || !controls.current) {
       throw new Error("ガラスの描画要素がありません。");
@@ -64,7 +64,7 @@ export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg"
             <h2>Photo Library</h2>
             <p>{gallery.length} photographs</p>
           </div>
-          {/* 見た目と画像化方式を一つの選択へまとめ、組み合わせの操作をなくす。 */}
+          {/* ぼかしと屈折の描画方式を、一つの切り替え欄にまとめる。 */}
           <div className="glass-methods">
             <NavLink to="/glass-css">CSS blur</NavLink>
             <NavLink to="/glass" end>

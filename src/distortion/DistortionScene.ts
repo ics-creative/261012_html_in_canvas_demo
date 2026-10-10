@@ -14,7 +14,7 @@ export const height = 720;
 const FLOW_DURATION = 1.2;
 const STAGGER = 0.08;
 
-/** 背景の変形に重ねてHTML面を順に流し、文字を重ねずに切り替える描画シーン。 */
+/** 背景の変形に合わせてHTML面を順に流し、文字の退場後に次の文字を入場させる。 */
 export async function createDistortionScene(
   host: HTMLElement,
   canvases: HTMLCanvasElement[],
@@ -31,7 +31,7 @@ export async function createDistortionScene(
   scene.backgroundNode = own(signal, background.color);
   const geometry = own(signal, new THREE.PlaneGeometry(width, height, 160, 96));
   const flow = own(signal, createFlowField());
-  // 演出中は操作を受け付けないため、退場・入場の二枚を使い回す。
+  // 退場・入場の二枚を使い回し、演出の完了後に次の操作を受け付ける。
   const sheets = Array.from({ length: 2 }, createSheet);
   const [outgoing, incoming] = sheets;
   let current = 0;
@@ -80,7 +80,7 @@ export async function createDistortionScene(
     // 静止文字を先に描いてからHTMLを隠し、両ボタンを同じフレームで無効にする。
     renderer.render(scene, camera);
     onStart();
-    // 背景は退場と入場を通して変形させ、先に終わって文字だけが残る時間を作らない。
+    // 背景の変形時間を文字の退場と入場に合わせ、終わる時刻を揃える。
     timeline.to(
       uniforms.progress,
       { value: 1, duration: FLOW_DURATION * 2, ease: "power1.inOut" },
@@ -120,7 +120,7 @@ export async function createDistortionScene(
       viewHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * scale);
     camera.updateProjectionMatrix();
     renderer.setSize(viewWidth, viewHeight);
-    // HTMLへ戻す瞬間の解像度差をなくすため、表示バッファに揃える。
+    // 表示バッファの解像度にHTMLを揃え、描画の切り替え時も文字の鮮明さを保つ。
     onScale(scale);
     invalidate();
   }
@@ -142,18 +142,18 @@ export async function createDistortionScene(
     if (complete) incoming.mesh.visible = false;
     renderer.render(scene, camera);
     dirty = false;
-    // 背景だけの最終描画を済ませ、GPU文字と元HTMLが重なるフレームを作らない。
+    // 背景の最終描画を済ませてから、GPU文字を元HTMLへ切り替える。
     if (complete) onComplete(current);
   }
 
   /** アニメーションと描画用リソースを解放する。 */
   onCleanup(signal, () => timeline.kill());
-  // 文字とぼかしのパイプラインを先に作り、最初の操作中にコンパイルで止めない。
+  // 文字とぼかしのパイプラインを初期化時に作り、最初の操作へ備える。
   observeSize(host, resize, signal);
   renderer.render(scene, camera);
   for (const sheet of sheets) sheet.mesh.visible = false;
   renderer.setAnimationLoop(render);
-  // 元HTMLの最初のpaintまで済ませ、空のテクスチャで遷移を始めない。
+  // 元HTMLの初回paintを待ち、描画済みのテクスチャで遷移を始める。
   await painted;
   return { go };
 }

@@ -11,7 +11,7 @@
   .transition-host {
     /* スクロールバーを演出の外へ残し、本文と同じ幅だけを描画する。 */
     inset-inline-end: var(--scrollbar-size);
-    /* 本文の下でも描画を保ち、演出開始時に空のCanvasを表示しない。 */
+    /* 本文の下にCanvasを置き、描画済みの画面から演出を始める。 */
     pointer-events: none;
   }
 
@@ -37,7 +37,7 @@
     --page-rule: color-mix(in srgb, var(--ink) 20%, var(--paper));
     --heading-size: 128px;
     --page-reveal-duration: 0.6s;
-    /* 長い見出しでも遅延を積み上げすぎず、全体を約1秒へ収める。 */
+    /* 長い見出しの遅延を調整し、全体を約1秒へ収める。 */
     --page-reveal-stagger: 16ms;
     /* Expo Outを近似し、各文字を素早く上げて滑らかに着地させる。 */
     --page-reveal-ease: cubic-bezier(0.16, 1, 0.32, 1);
@@ -99,7 +99,7 @@
         }
       }
 
-      /* MVのリンクは白い輪郭と半透明の面で示し、写真の明暗に左右されないようにする。 */
+      /* MVのリンクは白い輪郭と半透明の面で示し、写真の上で読みやすくする。 */
       .source-links a {
         border-color: currentColor;
         background: color-mix(in srgb, var(--canvas-background) 32%, transparent);
@@ -133,7 +133,7 @@
     .reveal-mask {
       /* 前の単語の文字数へ兄弟順を足し、改行後も同じ順序で表示する。 */
       --reveal-index: calc(var(--reveal-offset) + sibling-index() - 1);
-      /* 行内要素のまま包み、選択した文字の間へ改行が混ざるのを防ぐ。 */
+      /* 文字を行内要素で包み、元のテキストの選択範囲を保つ。 */
       display: inline-block;
       overflow: clip;
       vertical-align: top;

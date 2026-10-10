@@ -13,7 +13,7 @@ export function SourceLinks({
   basePath: string;
   hero?: boolean;
 }) {
-  // MVには他のページだけを並べ、同じ画面へ戻る操作を混ぜない。
+  // MVには他のページへのリンクを並べる。
   const destinations = hero ? pages.filter(({ id }) => id !== page) : pages;
 
   return (
