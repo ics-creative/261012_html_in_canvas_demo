@@ -1,8 +1,8 @@
-import { useRef, type Ref } from "react";
-import { NavLink } from "react-router";
+import { useContext, useRef, type Ref } from "react";
 import { useCanvasScene } from "../canvas/useCanvasScene";
 import type { HitCanvas } from "../canvas/HTMLHitTarget";
 import { createGlassScene } from "./GlassScene";
+import { GlassControlsContext } from "./GlassControls";
 import "./glass.css";
 
 // 指定されたJPEG XLを写真一覧へ使う。
@@ -25,7 +25,7 @@ export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg"
   const html = method === "html";
   const canvas = useRef<HitCanvas>(null);
   const page = useRef<HTMLElement>(null);
-  const controls = useRef<HTMLElement>(null);
+  const controls = useContext(GlassControlsContext);
   const [host] = useCanvasScene(async (element, signal, ready) => {
     await ready;
     signal.throwIfAborted();
@@ -58,31 +58,6 @@ export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg"
             )}
           </canvas>
         )}
-        {/* 3方式を等幅のセグメントに並べ、写真が屈折する位置へ重ねる。 */}
-        <nav ref={controls} className="glass-controls">
-          {/* レイヤー・画面・曲線のアイコンで各描画方式を区別する。 */}
-          <NavLink to="/glass-css">
-            <svg viewBox="0 0 24 24">
-              <path d="m12 4 8 4-8 4-8-4Zm-8 8 8 4 8-4M4 16l8 4 8-4" />
-            </svg>
-            <span>CSS</span>
-          </NavLink>
-          <NavLink to="/glass" end>
-            <svg viewBox="0 0 24 24">
-              <rect x="2" y="4" width="20" height="16" rx="2" />
-              <path d="m4 16 6-6 4 4 4-2 2 4" />
-            </svg>
-            <span>HTML in Canvas</span>
-          </NavLink>
-          <NavLink to="/glass-svg">
-            <svg viewBox="0 0 24 24">
-              <path d="M4 18C4 4 20 20 20 6" />
-              <rect x="2" y="16" width="4" height="4" rx="2" />
-              <rect x="18" y="4" width="4" height="4" rx="2" />
-            </svg>
-            <span>SVG</span>
-          </NavLink>
-        </nav>
       </section>
     </main>
   );

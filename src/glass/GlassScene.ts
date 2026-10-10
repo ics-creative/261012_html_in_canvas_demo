@@ -85,8 +85,8 @@ export async function createGlassScene(
   const soft = blur.getTextureNode().sample(refracted.sub(cropPosition).div(cropSize));
   // 縁の屈折は鮮明に、中央の散乱は滑らかにつなぐ。
   const bent = mix(soft, sharp, edge);
-  // AppleのRegularに倣い、薄い明色の層で文字のコントラストを面全体に揃える。
-  const body = mix(bent.rgb, vec3(1), 0.4);
+  // 写真の明るさを落ち着かせ、白いラベルのコントラストを面全体に揃える。
+  const body = mix(bent.rgb, vec3(0), 0.2);
   // 上下の縁へ光を回し、薄いセグメントでもガラスの厚みを見せる。
   const rim = distance.negate().smoothstep(0, 2).oneMinus();
   const light = direction.dot(vec2(-0.6, -0.8)).abs();

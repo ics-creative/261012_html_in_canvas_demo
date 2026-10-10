@@ -35,6 +35,8 @@ TransitionsとLaserは縦スクロールに対応し、現在見えている範�
 
 Glassは32件の写真を縦にスクロールできます。「CSS」は通常のDOMと`backdrop-filter`だけで表示します。「HTML in Canvas」と「SVG」はガラス部分だけを端末の解像度で処理し、ガウスぼかしと縁の屈折を合成します。元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
 
+3方式でツールバーを共有し、選択背景はCSSのアンカーポジショニングと共通のスプリング曲線で横へ移動します。アイコンと文字は白、選択中はiOS風の青で表示します。
+
 Glass SVGは[modern-screenshot](https://github.com/qq15725/modern-screenshot)で、HTML・CSS・JPEG XLを`foreignObject`入りのSVG画像へ埋め込みます。ガラスの屈折処理と写真一覧は既存版と共有し、スクロール・サイズ変更時に背面画像を更新します。SVG画像自体は操作できないため、一覧の表示と操作は通常のDOMに残し、ガラスだけを透明なCanvasで重ねています。
 
 ## 開発
@@ -82,3 +84,4 @@ PixiJS 8.22.0のWebGPUバッチやフィルターに残るテクスチャ参照�
 - スクロールアニメーション：[ICS MEDIAの記事](https://ics.media/entry/230718/)、[timeline-triggerの作例](https://github.com/ics-creative/230718_scroll_driven_animations/blob/main/index-timeline-trigger.html)、[Chrome公式の解説](https://developer.chrome.com/blog/scroll-triggered-animations)
 - CRT 3D：[Appleの実機資料](https://support.apple.com/en-us/docs/mac/8001)
 - ガラス：[AppleのLiquid Glass解説](https://developer.apple.com/videos/play/wwdc2025/219/)、[liquidGL](https://github.com/naughtyduk/liquidGL)、[ybouaneのシェーダー実装](https://github.com/ybouane/liquidglass/blob/main/src/shaders.ts)
+- セグメントの移動：[CSSのlinear()でUIが軽快になる! スプリングアニメーション活用術13選](https://ics.media/entry/260402/)

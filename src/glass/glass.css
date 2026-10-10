@@ -18,12 +18,6 @@
     width: 100%;
     height: 100%;
   }
-
-  /* 比較側だけに本物のbackdrop-filterを掛け、同じ位置・寸法で見比べる。 */
-  .glass-controls {
-    background: #fff6;
-    backdrop-filter: blur(12px) saturate(1.4);
-  }
 }
 
 .glass-page {
@@ -72,7 +66,12 @@
 
 .glass-controls {
   --glass-height: 96px;
+  --glass-selected: #0a84ff;
+  --selected-glass: --glass-html;
   position: absolute;
+  z-index: 2;
+  isolation: isolate;
+  anchor-scope: all;
   /* 常時表示するスクロールバーを除いた、本文の幅へ合わせる。 */
   inset: 48px var(--scrollbar-size) auto 0;
   margin-inline: auto;
@@ -88,8 +87,46 @@
     inset 0 2px 2px #fffc,
     inset 0 -2px 2px #fff8,
     0 4px 16px #0003;
-  color: var(--ink);
+  color: var(--paper);
   user-select: none;
+
+  /* 初回の寸法計算を済ませ、描画領域の表示切り替えと同時に現す。 */
+  .demo-viewport:not([id="/glass"]) & {
+    visibility: hidden;
+  }
+
+  /* 選択したリンクの形へ背景を揃え、共通の減衰スプリングで横へ追従させる。 */
+  &::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    position-anchor: var(--selected-glass);
+    top: anchor(top);
+    left: anchor(left);
+    width: anchor-size(width);
+    height: anchor-size(height);
+    border-radius: calc(var(--glass-height) / 2 - 8px);
+    background: #fffa;
+    box-shadow:
+      inset 0 2px 2px #fff8,
+      0 2px 8px #0002;
+    pointer-events: none;
+    transition: left 0.6s var(--navigation-spring);
+  }
+
+  &:has(a:first-child.active) {
+    --selected-glass: --glass-css;
+  }
+
+  &:has(a:last-child.active) {
+    --selected-glass: --glass-svg;
+  }
+
+  /* CSS版も明暗を揃え、白いアイコンを写真から浮かせる。 */
+  &.glass-controls-css {
+    background: #0004;
+    backdrop-filter: blur(12px) saturate(1.4);
+  }
 
   a {
     display: flex;
@@ -108,19 +145,16 @@
     text-align: center;
     text-decoration: none;
     transition:
-      background 0.2s,
-      box-shadow 0.2s;
+      color 0.2s,
+      background 0.2s;
 
     &:hover {
       background: #fff4;
     }
 
-    /* 薄い明色の面を選択中のセグメントへ重ねる。 */
+    /* iOSの選択色を文字とアイコンへ共有する。 */
     &.active {
-      background: #fffa;
-      box-shadow:
-        inset 0 2px 2px #fff8,
-        0 2px 8px #0002;
+      color: var(--glass-selected);
     }
   }
 
