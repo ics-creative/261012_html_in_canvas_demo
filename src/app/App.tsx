@@ -38,7 +38,7 @@ export function App() {
         <h1>HTML in Canvas</h1>
         <nav>
           {demos.map(([number, id, label]) => (
-            <NavLink key={id} to={`/${id}`}>
+            <NavLink key={id} to={`/${id}`} style={{ anchorName: `--demo-${id}` }}>
               <span>{number}</span> {label}
             </NavLink>
           ))}
