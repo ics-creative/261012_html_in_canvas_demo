@@ -13,6 +13,19 @@
   }
 }
 
+.glass-css {
+  .glass-page {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* 比較側だけに本物のbackdrop-filterを掛け、同じ位置・寸法で見比べる。 */
+  .glass-controls {
+    background: #fff6;
+    backdrop-filter: blur(12px) saturate(1.4);
+  }
+}
+
 .glass-page {
   --gutter: 32px;
   width: var(--page-width);
@@ -58,7 +71,7 @@
 }
 
 .glass-controls {
-  --glass-height: 128px;
+  --glass-height: 104px;
   position: absolute;
   /* 常時表示するスクロールバーを除いた、本文の幅へ合わせる。 */
   inset: 80px var(--scrollbar-size) auto 0;
@@ -85,63 +98,33 @@
     line-height: 1.6;
   }
 
-  .glass-materials {
-    display: flex;
-    gap: 8px;
-  }
-
-  .glass-sources {
+  .glass-methods {
     display: flex;
     justify-content: center;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
 
     a {
+      display: block;
+      padding: 12px 8px;
       color: var(--ink);
       font-size: 14px;
-      text-underline-offset: 4px;
-      user-select: none;
+      font-weight: bold;
+      white-space: nowrap;
+      text-decoration: none;
+      text-underline-offset: 8px;
+      text-decoration-thickness: 2px;
 
+      /* ガラスの中へ別のパネルを重ねず、選択は下線だけで示す。 */
+      &:hover,
       &.active {
-        font-weight: bold;
+        text-decoration-line: underline;
       }
     }
   }
 
-  /* 比較側だけに本物のbackdrop-filterを掛け、同じ位置・寸法で見比べる。 */
-  &:has(input[value="css"]:checked) {
-    background: #fff6;
-    backdrop-filter: blur(12px) saturate(1.4);
-  }
-
-  label {
-    position: relative;
-    display: grid;
-    place-items: center;
-    padding: 12px 16px;
-    font-size: 14px;
-    font-weight: bold;
-    text-underline-offset: 8px;
-    text-decoration-thickness: 2px;
-
-    /* ガラスの中へ別のパネルを重ねず、選択は下線だけで示す。 */
-    &:hover,
-    &:has(input:checked) {
-      text-decoration-line: underline;
-    }
-
-    input {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
-  }
-
   @media (width <= 768px) {
-    --glass-height: 192px;
+    --glass-height: 160px;
     inset-block-start: 48px;
     flex-direction: column;
     justify-content: center;
@@ -149,5 +132,9 @@
     width: calc(100% - 32px - var(--scrollbar-size));
     padding: 24px;
     text-align: center;
+
+    @media (width <= 480px) {
+      --glass-height: 208px;
+    }
   }
 }

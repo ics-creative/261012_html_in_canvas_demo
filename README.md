@@ -17,23 +17,23 @@ HTML in CanvasとWebGPUを使うChrome Beta向けです。[http://localhost:5180
 
 ## デモ一覧
 
-| No.  | デモ                                                 | 内容・操作                                                                                                                               | 描画     |
-| ---- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| 01   | [Transitions](http://localhost:5180/#/transition/01) | 縦スクロールの誌面をタイルで切り替える。MV・ヘッダー・フッターのリンクから遷移。                                                         | Three.js |
-| 02   | [Laser](http://localhost:5180/#/laser/01)            | 誌面内のリンクでランダムに切断。断片が同時に消え、次のページが拡大しながらフェードイン。                                                 | PixiJS   |
-| 03   | [Distortion](http://localhost:5180/#/distortion)     | 前後ボタンで切り替える。背景と文字を時間差で歪ませ、文字は退場後に次の内容が入場する。演出中はボタンを無効化。                           | Three.js |
-| 04   | [Cloth](http://localhost:5180/#/cloth)               | 正面の平らなHTMLから始まり、風で揺れる布になる。布のドラッグでつかみ、背景または右ドラッグで視点を回転。ホイールでズーム。               | Three.js |
-| 05   | [Book](http://localhost:5180/#/book)                 | 前後ボタン・紙端のクリックやドラッグでページをめくる。背景のドラッグで回転、ホイールでズーム。本文の選択と文字・画像の右クリックに対応。 | Three.js |
-| 06   | [CRT](http://localhost:5180/#/crt)                   | 入力できるHTMLフォームにCRT・グリッチ・発光を重ねる。「Effects」でON/OFF。送信はデモ内の表示を更新する。                                 | PixiJS   |
-| 07   | [CRT 3D](http://localhost:5180/#/crt-3d)             | iMac風の筐体の曲面画面にHTMLフォームを表示。筐体や背景のドラッグで視点を回転し、画面上では入力・選択・右クリックを操作。                 | Three.js |
-| 08   | [Glass](http://localhost:5180/#/glass)               | 写真一覧の「Photo Library」ツールバーがガラス部分。「Liquid Glass」と「CSS blur」で屈折とCSSのぼかしを比較。                             | Three.js |
-| 08-b | [Glass SVG](http://localhost:5180/#/glass-svg)       | 同じ写真一覧をSVGの`foreignObject`経由で画像化し、ガラスの背面へ使う。ツールバー内のリンクからHTML in Canvas版と切り替え。               | Three.js |
+| No.  | デモ                                                 | 内容・操作                                                                                                                               | 描画          |
+| ---- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| 01   | [Transitions](http://localhost:5180/#/transition/01) | 縦スクロールの誌面をタイルで切り替える。MV・ヘッダー・フッターのリンクから遷移。                                                         | Three.js      |
+| 02   | [Laser](http://localhost:5180/#/laser/01)            | 誌面内のリンクでランダムに切断。断片が同時に消え、次のページが拡大しながらフェードイン。                                                 | PixiJS        |
+| 03   | [Distortion](http://localhost:5180/#/distortion)     | 前後ボタンで切り替える。背景と文字を時間差で歪ませ、文字は退場後に次の内容が入場する。演出中はボタンを無効化。                           | Three.js      |
+| 04   | [Cloth](http://localhost:5180/#/cloth)               | 正面の平らなHTMLから始まり、風で揺れる布になる。布のドラッグでつかみ、背景または右ドラッグで視点を回転。ホイールでズーム。               | Three.js      |
+| 05   | [Book](http://localhost:5180/#/book)                 | 前後ボタン・紙端のクリックやドラッグでページをめくる。背景のドラッグで回転、ホイールでズーム。本文の選択と文字・画像の右クリックに対応。 | Three.js      |
+| 06   | [CRT](http://localhost:5180/#/crt)                   | 入力できるHTMLフォームにCRT・グリッチ・発光を重ねる。「Effects」でON/OFF。送信はデモ内の表示を更新する。                                 | PixiJS        |
+| 07   | [CRT 3D](http://localhost:5180/#/crt-3d)             | iMac風の筐体の曲面画面にHTMLフォームを表示。筐体や背景のドラッグで視点を回転し、画面上では入力・選択・右クリックを操作。                 | Three.js      |
+| 08   | [Glass](http://localhost:5180/#/glass)               | 写真一覧のツールバーで「CSS blur」「HTML in Canvas」「SVG foreignObject」の3方式を切り替え、ぼかしと屈折を比較。                         | CSS・Three.js |
+| 08-b | [Glass SVG](http://localhost:5180/#/glass-svg)       | 同じ写真一覧をSVGの`foreignObject`経由で画像化し、ガラスの背面へ使う。ツールバー内のリンクからHTML in Canvas版と切り替え。               | Three.js      |
 
 URLはReact Routerの`HashRouter`で管理します。共通ヘッダーの下全体が描画領域で、UIは英語表記です。
 
 TransitionsとLaserは縦スクロールに対応し、現在見えている範囲から遷移を開始します。見出しの表示にはCSSの`timeline-trigger`・`animation-trigger`と`sibling-index()`による時間差を使います。
 
-Glassは32件の写真を縦にスクロールできます。ガラス部分だけを端末の解像度で処理し、ガウスぼかしと縁の屈折を合成します。元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
+Glassは32件の写真を縦にスクロールできます。「CSS blur」は通常のDOMと`backdrop-filter`だけで表示します。「HTML in Canvas」と「SVG foreignObject」はガラス部分だけを端末の解像度で処理し、ガウスぼかしと縁の屈折を合成します。元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
 
 Glass SVGは[modern-screenshot](https://github.com/qq15725/modern-screenshot)で、HTML・CSS・JPEG XLを`foreignObject`入りのSVG画像へ埋め込みます。ガラスの屈折処理と写真一覧は既存版と共有し、スクロール・サイズ変更時に背面画像を更新します。SVG画像自体は操作できないため、一覧の表示と操作は通常のDOMに残し、ガラスだけを透明なCanvasで重ねています。
 

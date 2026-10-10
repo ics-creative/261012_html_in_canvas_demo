@@ -13,7 +13,7 @@ export async function createGlassScene(
   host: HTMLElement,
   canvas: HitCanvas,
   page: HTMLElement,
-  controls: HTMLFormElement,
+  controls: HTMLElement,
   signal: AbortSignal,
   svg: boolean,
 ) {
@@ -24,7 +24,6 @@ export async function createGlassScene(
   const viewport = uniform(new THREE.Vector2());
   const size = uniform(new THREE.Vector2());
   const position = uniform(new THREE.Vector2());
-  const enabled = uniform(1);
   let frame = 0;
   const resize = () => {
     const width = host.clientWidth;
@@ -92,7 +91,7 @@ export async function createGlassScene(
   const rim = distance.negate().smoothstep(0, 2).oneMinus();
   const light = direction.dot(vec2(-0.6, -0.8));
   const glass = mix(body, vec3(1), rim.mul(light.clamp()).mul(0.2));
-  const mask = distance.negate().smoothstep(0, 1).mul(enabled);
+  const mask = distance.negate().smoothstep(0, 1);
   const material = own(
     signal,
     new THREE.MeshBasicNodeMaterial({
@@ -107,14 +106,13 @@ export async function createGlassScene(
   const quad = new THREE.QuadMesh(material);
 
   function requestRender() {
-    // paintとフォーム変更を次の一描画にまとめ、ブラウザーのpaint中はGPUを更新しない。
+    // paintを次の一描画にまとめ、ブラウザーのpaint中はGPUを更新しない。
     if (!frame) frame = requestAnimationFrame(render);
   }
 
   function render() {
     frame = 0;
     // 更新済みのHTMLだけを合成し、静止中は描画しない。
-    enabled.value = Number(new FormData(controls).get("material") === "glass");
     quad.render(renderer);
   }
 
@@ -146,7 +144,5 @@ export async function createGlassScene(
   // 初回のHTML paintを待ってから描き、空のテクスチャを表示完了としない。
   await painted;
   signal.throwIfAborted();
-  // 元フォームを直接読むため、Reactの選択状態と同期処理は持たせない。
-  controls.addEventListener("change", requestRender, { signal });
   requestRender();
 }
