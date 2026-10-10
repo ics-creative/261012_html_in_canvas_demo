@@ -16,14 +16,14 @@ export function GlassControls({ ref, css }: { ref: Ref<HTMLElement>; css: boolea
         </svg>
         <span>CSS</span>
       </NavLink>
-      <NavLink to="/glass" end style={{ anchorName: "--glass-html" }}>
+      <NavLink to="/glass" end>
         <svg viewBox="0 0 24 24">
           <rect x="2" y="4" width="20" height="16" rx="2" />
           <path d="m4 16 6-6 4 4 4-2 2 4" />
         </svg>
         <span>HTML in Canvas</span>
       </NavLink>
-      <NavLink to="/glass-svg" style={{ anchorName: "--glass-svg" }}>
+      <NavLink to="/glass-svg">
         <svg viewBox="0 0 24 24">
           <path d="M4 18C4 4 20 20 20 6" />
           <rect x="2" y="16" width="4" height="4" rx="2" />
