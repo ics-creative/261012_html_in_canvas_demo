@@ -1,12 +1,8 @@
 .book-stage {
   background: var(--canvas-background);
 
-  .book-host {
-    touch-action: none;
-
-    [drawable] {
-      transform-origin: 0 0;
-    }
+  .book-host [drawable] {
+    transform-origin: 0 0;
   }
 
   .book-navigation {
@@ -36,7 +32,6 @@
   font-family: "Helvetica Neue", Arial, sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  color-scheme: light;
   cursor: text;
 
   header,

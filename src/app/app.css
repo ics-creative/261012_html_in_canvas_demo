@@ -87,18 +87,12 @@ canvas {
   nav {
     display: flex;
     align-items: center;
-    gap: var(--page-link-gap, 24px);
+    gap: 24px;
   }
 
   a {
     color: inherit;
     text-decoration: none;
-    border-bottom: 2px solid transparent;
-
-    &:hover,
-    &.current {
-      border-color: var(--page-link-color, currentColor);
-    }
   }
 }
 
@@ -140,7 +134,7 @@ canvas {
       /* navのスクロール領域に切られず、スプリングの行き過ぎまで描く。 */
       position: fixed;
       z-index: -1;
-      position-anchor: var(--current-demo);
+      position-anchor: --current-demo;
       top: anchor(top);
       left: anchor(left);
       width: anchor-size(width);
@@ -153,39 +147,6 @@ canvas {
         top 0.8s var(--navigation-spring),
         width 0.8s var(--navigation-spring),
         height 0.8s var(--navigation-spring);
-    }
-
-    /* アンカー名は固定し、現在地に応じて背景の参照先だけを交換する。 */
-    &:has(a[href$="#/laser"]:target-current) {
-      --current-demo: --demo-laser;
-    }
-
-    &:has(a[href$="#/cloth"]:target-current) {
-      --current-demo: --demo-cloth;
-    }
-
-    &:has(a[href$="#/book"]:target-current) {
-      --current-demo: --demo-book;
-    }
-
-    &:has(a[href$="#/transition"]:target-current) {
-      --current-demo: --demo-transition;
-    }
-
-    &:has(a[href$="#/crt"]:target-current) {
-      --current-demo: --demo-crt;
-    }
-
-    &:has(a[href$="#/crt-3d"]:target-current) {
-      --current-demo: --demo-crt-3d;
-    }
-
-    &:has(a[href$="#/distortion"]:target-current) {
-      --current-demo: --demo-distortion;
-    }
-
-    &:has(a[href$="#/glass"]:target-current) {
-      --current-demo: --demo-glass;
     }
   }
 
@@ -213,7 +174,9 @@ canvas {
     }
 
     /* 描画領域のIDは表示中のデモを示し、準備中の画面は選ばれない。 */
+    /* アンカー名は固定し、現在地のリンクへ付け替えて背景を追従させる。 */
     &:target-current {
+      anchor-name: --current-demo;
       color: var(--paper);
 
       span {
@@ -267,6 +230,7 @@ footer,
 
 .canvas-host,
 .book-host,
+.retro-host,
 .transition-host,
 .distortion-host,
 .crt-screen > div,

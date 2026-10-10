@@ -203,7 +203,6 @@ export function createClothPhysics(initialPose: Float32Array) {
   }
 
   return {
-    positions: particles,
     interpolatedPositions,
     update,
     grab,

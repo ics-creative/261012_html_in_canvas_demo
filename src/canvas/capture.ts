@@ -31,10 +31,6 @@ export function createHTMLCapture(
     // 3Dの入力領域が全画面でも、描くHTMLの原寸だけをテクスチャへ送る。
     canvas.width = source.clientWidth * devicePixelRatio;
     canvas.height = source.clientHeight * devicePixelRatio;
-    requestPaint();
-  }
-
-  function requestPaint() {
     (canvas as PaintCanvas).requestPaint();
   }
 
@@ -42,5 +38,5 @@ export function createHTMLCapture(
   // 起動中の画面離脱でも待機を終え、呼び出し元の初期化を完了させる。
   signal.addEventListener("abort", () => painted.resolve(), { once: true });
   refresh();
-  return { refresh, requestPaint, painted: painted.promise };
+  return { refresh, painted: painted.promise };
 }

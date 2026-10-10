@@ -97,11 +97,8 @@
     text-underline-offset: 8px;
     text-decoration-thickness: 2px;
 
-    &:hover {
-      text-decoration-line: underline;
-    }
-
     /* ガラスの中へ別のパネルを重ねず、選択は下線だけで示す。 */
+    &:hover,
     &:has(input:checked) {
       text-decoration-line: underline;
     }

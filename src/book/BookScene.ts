@@ -43,7 +43,7 @@ export async function createBookScene(
   // 天板の上面を本の底へ合わせ、有限の厚みと丸い端部を見せる。
   // 木目の法線と表紙の布目を強め、塗膜を使わないマットなウォールナットにする。
   // 背は紙の綴じ目の下へ納め、金属棒のような円柱の反射を出さない。
-  const world = own(signal, createBookWorld(renderer, scene));
+  const world = createBookWorld(renderer, scene, signal);
   // フォントと写真を読み終えてからHTMLTextureを作り、後から初期状態を修復しない。
   await ready;
   signal.throwIfAborted();

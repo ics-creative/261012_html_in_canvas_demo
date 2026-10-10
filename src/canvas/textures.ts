@@ -31,20 +31,19 @@ export function createCanvasTextures(
   // 全誌面を最初のpaintへ登録し、後からめくるページの初回描画も揃える。
   // 連打で未表示の写真を読んでも空の画像にしない。
   for (const texture of textures) renderer.initTexture(texture);
-  const painted = new Promise<void>((resolve) => {
-    canvas.addEventListener(
-      "paint",
-      () => {
-        // 再利用したHTMLの変更通知が空でも、初回に保留された画像転送を再開する。
-        for (const texture of textures) texture.needsUpdate = true;
-        resolve();
-      },
-      { once: true, signal },
-    );
-    // 起動中の離脱でも初期化の待機を終える。
-    onCleanup(signal, resolve);
-  });
+  const painted = Promise.withResolvers<void>();
+  canvas.addEventListener(
+    "paint",
+    () => {
+      // 再利用したHTMLの変更通知が空でも、初回に保留された画像転送を再開する。
+      for (const texture of textures) texture.needsUpdate = true;
+      painted.resolve();
+    },
+    { once: true, signal },
+  );
+  // 起動中の離脱でも初期化の待機を終える。
+  onCleanup(signal, painted.resolve);
   // 以後の誌面更新はThree.jsの共有onpaintに任せ、移動先のCanvasで描画を再開する。
   canvas.addEventListener("paint", render, { signal });
-  return { textures, painted, refresh: () => canvas.requestPaint() };
+  return { textures, painted: painted.promise, refresh: () => canvas.requestPaint() };
 }

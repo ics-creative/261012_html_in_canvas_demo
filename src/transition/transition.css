@@ -143,15 +143,16 @@
       display: inline-block;
     }
 
-    .source-header {
+    .source-header,
+    > footer {
       flex-wrap: wrap;
       gap: 24px;
+      font-size: 14px;
+    }
+
+    .source-header {
       padding-bottom: 24px;
       border-bottom: 2px solid color-mix(in srgb, currentColor 32%, transparent);
-
-      > span {
-        font-size: 14px;
-      }
     }
 
     /* 枠と面でクリック領域を示し、ヘッダー・MV・フッターを同じリンクにする。 */
@@ -215,14 +216,11 @@
     }
 
     > footer {
-      flex-wrap: wrap;
-      gap: 24px;
       padding: var(--page-space);
       border-top: 2px solid var(--page-rule);
 
       > span {
         color: var(--muted);
-        font-size: 14px;
       }
     }
 

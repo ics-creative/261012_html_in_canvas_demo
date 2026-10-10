@@ -2,7 +2,6 @@
   --heading-size: 64px;
   color: var(--ink);
   background: var(--paper);
-  color-scheme: light;
 
   .poster-top {
     height: 52px;
@@ -65,7 +64,6 @@
       width: 100%;
       padding: 0;
       border: 0;
-      color: var(--ink);
       background: transparent;
       font-size: 12px;
     }

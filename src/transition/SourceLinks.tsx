@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import type { PageId } from "./pages";
 
 /** 誌面の遷移リンクを共有し、MVでは移動先を動詞とSVG矢印で明示する。 */
 export function SourceLinks({
@@ -7,8 +8,8 @@ export function SourceLinks({
   basePath,
   hero = false,
 }: {
-  pages: readonly { id: string; name: string }[];
-  page: string;
+  pages: readonly { id: PageId; name: string }[];
+  page: PageId;
   basePath: string;
   hero?: boolean;
 }) {

@@ -3,9 +3,8 @@ import { flushSync } from "react-dom";
 import { useCanvasScene } from "../canvas/useCanvasScene";
 import { Navigate, useParams } from "react-router";
 import { HTMLTexture } from "../canvas/HTMLTexture";
-import { LaserPage } from "../canvas/laser/LaserPage";
-import { pages, TransitionPage } from "./TransitionPage";
-import type { PageId } from "./TransitionPage";
+import { TransitionPage } from "./TransitionPage";
+import { pages, laserPages } from "./pages";
 import "../canvas/canvas.css";
 import "./transition.css";
 
@@ -16,11 +15,12 @@ function TransitionViewport({
   effect,
   basePath,
 }: {
-  page: PageId;
+  page: number;
   effect: Effect;
   basePath: string;
 }) {
-  const Page = effect === "laser" ? LaserPage : TransitionPage;
+  const laser = effect === "laser";
+  const catalog = laser ? laserPages : pages;
   const stage = useRef<HTMLElement>(null);
   const document = useRef<HTMLDivElement>(null);
   const [displayed, setDisplayed] = useState(page);
@@ -38,14 +38,14 @@ function TransitionViewport({
       element,
       Array.from(stage.current!.querySelectorAll<HTMLCanvasElement>(".capture-staging canvas")),
       signal,
-      pages.findIndex(({ id }) => id === page),
+      page,
       () => setAnimating(true),
       (index) => {
         // 次の誌面とスクロールの先頭を同じフレームに揃えてHTMLへ戻す。
         const viewport = document.current!;
         viewport.scrollTop = 0;
         flushSync(() => {
-          setDisplayed(pages[index].id);
+          setDisplayed(index);
           setAnimating(false);
         });
         // Canvasで出現済みのMVを完了位置へ揃え、HTMLに戻った際に再び隠さない。
@@ -56,15 +56,12 @@ function TransitionViewport({
     );
     signal.throwIfAborted();
     // 初期化中にスクロールした場合も、最初の演出へ現在の表示位置を渡す。
-    instance.scrollTo(
-      pages.findIndex(({ id }) => id === page),
-      document.current!.scrollTop,
-    );
+    instance.scrollTo(page, document.current!.scrollTop);
     return instance;
   });
 
   useEffect(() => {
-    if (engine) engine.transitionTo(pages.findIndex(({ id }) => id === page));
+    engine?.transitionTo(page);
   }, [page, engine]);
 
   return (
@@ -78,19 +75,14 @@ function TransitionViewport({
           ref={document}
           className="transition-document scrollable"
           inert={animating}
-          onScroll={(event) =>
-            engine?.scrollTo(
-              pages.findIndex(({ id }) => id === displayed),
-              event.currentTarget.scrollTop,
-            )
-          }
+          onScroll={(event) => engine?.scrollTo(displayed, event.currentTarget.scrollTop)}
         >
-          <Page page={displayed} basePath={basePath} />
+          <TransitionPage page={displayed} basePath={basePath} laser={laser} />
         </div>
-        {pages.map(({ id }) => (
+        {catalog.map(({ id }, index) => (
           <HTMLTexture key={id}>
             <div className="capture-page">
-              <Page page={id} basePath={basePath} />
+              <TransitionPage page={index} basePath={basePath} laser={laser} />
             </div>
           </HTMLTexture>
         ))}
@@ -102,8 +94,9 @@ function TransitionViewport({
 /** URLに対応したHTMLページをレーザーまたはタイルで切り替える。 */
 export function TransitionDemo({ effect = "tiles" }: { effect?: Effect }) {
   const { page: id } = useParams();
-  const page = pages.find((item) => item.id === id);
+  const catalog = effect === "laser" ? laserPages : pages;
+  const page = catalog.findIndex((item) => item.id === id);
   const basePath = effect === "laser" ? "/laser" : "/transition";
-  if (!page) return <Navigate to={`${basePath}/01`} replace />;
-  return <TransitionViewport key={effect} page={page.id} effect={effect} basePath={basePath} />;
+  if (page < 0) return <Navigate to={`${basePath}/01`} replace />;
+  return <TransitionViewport key={effect} page={page} effect={effect} basePath={basePath} />;
 }

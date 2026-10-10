@@ -20,6 +20,7 @@ export function createClothControls(
   const plane = new THREE.Plane();
   const offset = new THREE.Vector3();
   const target = new THREE.Vector3();
+  const positions = picking.geometry.getAttribute("position");
 
   const drag = new DragGesture<PointerEvent>(
     canvas,
@@ -34,12 +35,13 @@ export function createClothControls(
         const intersection = ray(event).intersectObject(picking)[0];
         if (!intersection?.face) return;
         const { face, point } = intersection;
+        // 掴む3頂点だけを既存の格子から読み、全頂点のVector3配列を複写しない。
         const nearest = [face.a, face.b, face.c].toSorted(
           (a, b) =>
-            physics.positions[a].distanceToSquared(point) -
-            physics.positions[b].distanceToSquared(point),
+            target.fromBufferAttribute(positions, a).distanceToSquared(point) -
+            target.fromBufferAttribute(positions, b).distanceToSquared(point),
         )[0];
-        target.copy(physics.positions[nearest]);
+        target.fromBufferAttribute(positions, nearest);
         // カメラに平行な面で布を掴み、視点回転と切り分ける。
         camera.getWorldDirection(plane.normal);
         plane.setFromNormalAndCoplanarPoint(plane.normal, point);

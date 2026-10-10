@@ -65,11 +65,6 @@ export function DistortionDemo() {
     );
   });
 
-  const go = (step: -1 | 1) => {
-    if (!scene) return;
-    scene.go(step);
-  };
-
   return (
     <main className="experiment">
       <section ref={stage} className="canvas-stage distortion-stage">
@@ -85,7 +80,7 @@ export function DistortionDemo() {
         <PageNavigation
           className="distortion-navigation"
           disabled={() => !scene || animating}
-          onGo={go}
+          onGo={(step) => scene?.go(step)}
         />
         {pages.map((page, index) => (
           <div key={index}>

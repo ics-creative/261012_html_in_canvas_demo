@@ -2,19 +2,8 @@
   background: var(--canvas-background);
 }
 
-.retro-host,
-.retro-host > canvas {
-  position: absolute;
-  inset: 0;
-}
-
 .retro-host {
   cursor: grab;
-
-  > canvas {
-    width: 100%;
-    height: 100%;
-  }
 }
 
 .retro-document {
@@ -119,11 +108,9 @@
     padding: 8px 12px;
     border: 2px solid var(--window-rule);
     border-radius: 4px;
-    color: var(--window-ink);
     background: white;
     box-shadow: inset 0 2px 4px #18253620;
     font-size: 20px;
-    line-height: 1.4;
   }
 
   textarea {

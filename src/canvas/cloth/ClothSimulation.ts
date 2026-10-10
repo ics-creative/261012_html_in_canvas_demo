@@ -1,4 +1,3 @@
-import { Vector3 } from "three";
 import { CLOTH_COLUMNS, type ClothPoint } from "./ClothPhysics";
 import type { ClothCommand } from "./ClothWorker";
 import { onCleanup } from "../lifecycle";
@@ -7,9 +6,6 @@ import { onCleanup } from "../lifecycle";
 export function createClothSimulation(initialPose: Float32Array, signal: AbortSignal) {
   const worker = new Worker(new URL("./ClothWorker.ts", import.meta.url), { type: "module" });
   onCleanup(signal, () => worker.terminate());
-  const positions = Array.from({ length: initialPose.length / 3 }, (_, index) =>
-    new Vector3().fromArray(initialPose, index * 3),
-  );
   const interpolatedPositions = initialPose;
   const pose = initialPose.slice();
   worker.postMessage(pose, [pose.buffer]);
@@ -20,14 +16,12 @@ export function createClothSimulation(initialPose: Float32Array, signal: AbortSi
   // 計算中は次の更新を溜めず、完了した姿勢だけを受け取る。
   worker.addEventListener("message", ({ data }: MessageEvent<Float32Array>) => {
     interpolatedPositions.set(data);
-    positions.forEach((position, index) => position.fromArray(data, index * 3));
     pending = false;
     updated = true;
   });
   const send: (command: ClothCommand) => void = worker.postMessage.bind(worker);
 
   return {
-    positions,
     interpolatedPositions,
     update(delta: number, wind: number) {
       elapsed += delta;
