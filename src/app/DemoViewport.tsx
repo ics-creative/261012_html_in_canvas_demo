@@ -32,7 +32,7 @@ export function DemoViewport({ children }: { children: ReactNode }) {
 
   // リンク先のDOMを保ってIDだけを変え、現在地のアンカーを途切れさせない。
   return (
-    <div className="demo-viewport" id={active}>
+    <div className="demo-viewport" id={active === "/glass-svg" ? "/glass" : active}>
       {locations.map((route) => {
         const path = demoPath(route);
         const visible = path === active;

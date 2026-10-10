@@ -6,17 +6,21 @@ import { createCanvasTextures } from "../canvas/textures";
 import { observeSize } from "../canvas/resize";
 import { own, onCleanup } from "../canvas/lifecycle";
 import type { HitCanvas } from "../canvas/HTMLHitTarget";
+import { createSVGTextures } from "./SVGTexture";
 
 /** 生きたHTMLを共有し、ガラスの縁で背景を屈折させる。 */
 export async function createGlassScene(
   host: HTMLElement,
   canvas: HitCanvas,
+  page: HTMLElement,
   controls: HTMLFormElement,
   signal: AbortSignal,
+  svg: boolean,
 ) {
   const renderer = await createRenderer(host, signal, canvas);
-  const source = canvas.querySelector<HTMLElement>("[drawable]");
+  const source = svg ? page : canvas.querySelector<HTMLElement>("[drawable]");
   if (!source) throw new Error("ガラスの描画元がありません。");
+  if (svg) renderer.setClearColor(0, 0);
   const viewport = uniform(new THREE.Vector2());
   const size = uniform(new THREE.Vector2());
   const position = uniform(new THREE.Vector2());
@@ -30,17 +34,21 @@ export async function createGlassScene(
     // 外形と画面内の寸法はCSSに任せ、屈折の計算だけ同じ寸法へ合わせる。
     size.value.set(controls.offsetWidth, controls.offsetHeight);
     position.value.set(controls.offsetLeft, controls.offsetTop);
-    source.style.width = `${width * devicePixelRatio}px`;
-    source.style.height = `${height * devicePixelRatio}px`;
-    source.style.setProperty("--page-width", `${width}px`);
-    source.style.setProperty("--page-height", `${height}px`);
+    page.style.setProperty("--page-width", `${width}px`);
+    page.style.setProperty("--page-height", `${height}px`);
     // CSS変形は描画元を変えず、元HTMLの入力・選択領域だけを画面と揃える。
-    source.style.transform = `scale(${1 / devicePixelRatio})`;
+    if (!svg) {
+      source.style.width = `${width * devicePixelRatio}px`;
+      source.style.height = `${height * devicePixelRatio}px`;
+      source.style.transform = `scale(${1 / devicePixelRatio})`;
+    }
   };
 
   // HTMLの寸法を確定してから初回転送し、低解像度の画像で初期化しない。
   resize();
-  const { textures, painted } = createCanvasTextures([canvas], renderer, signal, requestRender);
+  const { textures, painted, refresh } = svg
+    ? await createSVGTextures(page, signal, requestRender)
+    : createCanvasTextures([canvas], renderer, signal, requestRender);
   const textureSize = viewport.value.clone();
 
   // CSSと同じカプセルの距離場を使い、形状と屈折の境界を揃える。
@@ -74,7 +82,8 @@ export async function createGlassScene(
   const blur = own(signal, gaussianBlur(cropped, devicePixelRatio, 4));
   const refracted = screenUV.mul(viewport).sub(offset);
   const sharp = texture(textures[0], refracted.div(viewport).flipY());
-  const soft = blur.getTextureNode().sample(refracted.sub(cropPosition).div(cropSize).flipY());
+  // ぼかしのRenderTargetは上端が原点。元画像用のY反転を重ねない。
+  const soft = blur.getTextureNode().sample(refracted.sub(cropPosition).div(cropSize));
   // 縁の屈折は鮮明に、中央の散乱は滑らかにつなぐ。
   const bent = mix(soft, sharp, edge);
   // AppleのRegularに倣い、薄い明色の層で文字のコントラストを面全体に揃える。
@@ -88,6 +97,9 @@ export async function createGlassScene(
     signal,
     new THREE.MeshBasicNodeMaterial({
       colorNode: mix(background.rgb, glass, mask),
+      // SVG版の一覧は通常のDOMで表示し、GPUではガラス部分だけを重ねる。
+      opacityNode: svg ? mask : null,
+      transparent: svg,
       toneMapped: false,
     }),
   );
@@ -112,13 +124,14 @@ export async function createGlassScene(
     () => {
       resize();
       // Three.jsがHTMLテクスチャを登録してから、Canvasの操作領域を更新する。
-      canvas.updateElementGeometry(source);
+      if (svg) refresh();
+      else canvas.updateElementGeometry(source);
       cropped.setSize(
         (size.value.x + padding * 2) * devicePixelRatio,
         (size.value.y + padding * 2) * devicePixelRatio,
       );
       // サイズ変更時だけ画像を確保し直し、転送は次のpaintへ任せる。
-      if (!textureSize.equals(viewport.value)) {
+      if (!svg && !textureSize.equals(viewport.value)) {
         textures[0].dispose();
         renderer.initTexture(textures[0]);
         textureSize.copy(viewport.value);
@@ -128,7 +141,7 @@ export async function createGlassScene(
   );
   onCleanup(signal, () => {
     cancelAnimationFrame(frame);
-    canvas.clearElementGeometry(source);
+    if (!svg) canvas.clearElementGeometry(source);
   });
   // 初回のHTML paintを待ってから描き、空のテクスチャを表示完了としない。
   await painted;

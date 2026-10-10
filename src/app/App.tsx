@@ -53,6 +53,7 @@ export function App() {
         <Route path="/crt" element={<CRTDemo />} />
         <Route path="/crt-3d" element={<RetroDemo />} />
         <Route path="/glass" element={<GlassDemo />} />
+        <Route path="/glass-svg" element={<GlassDemo svg />} />
         <Route path="*" element={<Navigate to="/cloth" replace />} />
       </DemoViewport>
     </>
