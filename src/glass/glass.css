@@ -146,12 +146,6 @@
     line-height: 1;
     text-align: center;
     text-decoration: none;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #fff4;
-    }
-
     /* iOSの選択色を文字とアイコンへ共有する。 */
     &.active {
       color: var(--glass-selected);
