@@ -28,6 +28,10 @@ export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg"
   const controls = useContext(GlassControlsContext);
   const [host] = useCanvasScene(async (element, signal, ready) => {
     await ready;
+    // 切り替えUIを先に描き、続くアイドル時間にSVGの背面画像を準備する。
+    if (method === "svg") {
+      await new Promise<IdleDeadline>((resolve) => requestIdleCallback(resolve));
+    }
     signal.throwIfAborted();
     // CSS版は通常のDOMとbackdrop-filterで描く。
     if (method === "css") return;
