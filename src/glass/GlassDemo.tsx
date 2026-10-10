@@ -65,7 +65,7 @@ export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg"
             <svg viewBox="0 0 24 24">
               <path d="m12 4 8 4-8 4-8-4Zm-8 8 8 4 8-4M4 16l8 4 8-4" />
             </svg>
-            <span>CSS blur</span>
+            <span>CSS</span>
           </NavLink>
           <NavLink to="/glass" end>
             <svg viewBox="0 0 24 24">
@@ -80,7 +80,7 @@ export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg"
               <rect x="2" y="16" width="4" height="4" rx="2" />
               <rect x="18" y="4" width="4" height="4" rx="2" />
             </svg>
-            <span>SVG foreignObject</span>
+            <span>SVG</span>
           </NavLink>
         </nav>
       </section>

@@ -71,17 +71,17 @@
 }
 
 .glass-controls {
-  --glass-height: 64px;
+  --glass-height: 96px;
   position: absolute;
   /* 常時表示するスクロールバーを除いた、本文の幅へ合わせる。 */
   inset: 48px var(--scrollbar-size) auto 0;
   margin-inline: auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  width: min(384px, calc(100% - 32px - var(--scrollbar-size)));
+  gap: 8px;
+  width: min(768px, calc(100% - 32px - var(--scrollbar-size)));
   height: var(--glass-height);
-  padding: 4px;
+  padding: 8px;
   border-radius: calc(var(--glass-height) / 2);
   /* 上下の細い反射と落ち影で、写真から浮いたガラスの輪郭を見せる。 */
   box-shadow:
@@ -97,14 +97,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 8px;
     min-width: 0;
-    padding-inline: 4px;
-    border-radius: calc(var(--glass-height) / 2 - 4px);
+    padding-inline: 8px;
+    border-radius: calc(var(--glass-height) / 2 - 8px);
     color: inherit;
-    font-size: 10px;
+    font-size: 20px;
     font-weight: bold;
-    line-height: 1.2;
+    line-height: 1;
     text-align: center;
     text-decoration: none;
     transition:
@@ -126,8 +126,8 @@
 
   svg {
     flex-shrink: 0;
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -136,13 +136,23 @@
   }
 
   span {
-    display: grid;
-    place-items: center;
+    align-content: center;
     min-height: 24px;
     text-wrap: balance;
   }
 
-  @media (width <= 640px) {
-    width: min(384px, calc(100% - 16px - var(--scrollbar-size)));
+  @media (width <= 768px) {
+    --glass-height: 128px;
+    width: calc(100% - 16px - var(--scrollbar-size));
+
+    a {
+      gap: 0;
+      padding-inline: 4px;
+    }
+
+    /* 3行までのラベルを同じ高さへ揃え、アイコンの位置を揃える。 */
+    span {
+      min-height: 64px;
+    }
   }
 }
