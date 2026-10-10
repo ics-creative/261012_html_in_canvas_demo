@@ -58,20 +58,30 @@ export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg"
             )}
           </canvas>
         )}
-        {/* 一覧の主ツールバー全体をガラスにし、写真が縁で曲がる位置へ重ねる。 */}
+        {/* 3方式を等幅のセグメントに並べ、写真が屈折する位置へ重ねる。 */}
         <nav ref={controls} className="glass-controls">
-          <div>
-            <h2>Photo Library</h2>
-            <p>{gallery.length} photographs</p>
-          </div>
-          {/* ぼかしと屈折の描画方式を、一つの切り替え欄にまとめる。 */}
-          <div className="glass-methods">
-            <NavLink to="/glass-css">CSS blur</NavLink>
-            <NavLink to="/glass" end>
-              HTML in Canvas
-            </NavLink>
-            <NavLink to="/glass-svg">SVG foreignObject</NavLink>
-          </div>
+          {/* レイヤー・画面・曲線のアイコンで各描画方式を区別する。 */}
+          <NavLink to="/glass-css">
+            <svg viewBox="0 0 24 24">
+              <path d="m12 4 8 4-8 4-8-4Zm-8 8 8 4 8-4M4 16l8 4 8-4" />
+            </svg>
+            <span>CSS blur</span>
+          </NavLink>
+          <NavLink to="/glass" end>
+            <svg viewBox="0 0 24 24">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m4 16 6-6 4 4 4-2 2 4" />
+            </svg>
+            <span>HTML in Canvas</span>
+          </NavLink>
+          <NavLink to="/glass-svg">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 18C4 4 20 20 20 6" />
+              <rect x="2" y="16" width="4" height="4" rx="2" />
+              <rect x="18" y="4" width="4" height="4" rx="2" />
+            </svg>
+            <span>SVG foreignObject</span>
+          </NavLink>
         </nav>
       </section>
     </main>

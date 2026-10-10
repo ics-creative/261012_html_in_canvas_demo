@@ -26,7 +26,7 @@ HTML in CanvasとWebGPUを使うChrome Beta向けです。[http://localhost:5180
 | 05   | [Book](http://localhost:5180/#/book)                 | 前後ボタン・紙端のクリックやドラッグでページをめくる。背景のドラッグで回転、ホイールでズーム。本文の選択と文字・画像の右クリックに対応。 | Three.js      |
 | 06   | [CRT](http://localhost:5180/#/crt)                   | 入力できるHTMLフォームにCRT・グリッチ・発光を重ねる。「Effects」でON/OFF。送信はデモ内の表示を更新する。                                 | PixiJS        |
 | 07   | [CRT 3D](http://localhost:5180/#/crt-3d)             | iMac風の筐体の曲面画面にHTMLフォームを表示。筐体や背景のドラッグで視点を回転し、画面上では入力・選択・右クリックを操作。                 | Three.js      |
-| 08   | [Glass](http://localhost:5180/#/glass)               | 写真一覧のツールバーで「CSS blur」「HTML in Canvas」「SVG foreignObject」の3方式を切り替え、ぼかしと屈折を比較。                         | CSS・Three.js |
+| 08   | [Glass](http://localhost:5180/#/glass)               | アイコン付きセグメントで「CSS blur」「HTML in Canvas」「SVG foreignObject」の3方式を切り替え、ぼかしと屈折を比較。                       | CSS・Three.js |
 | 08-b | [Glass SVG](http://localhost:5180/#/glass-svg)       | 同じ写真一覧をSVGの`foreignObject`経由で画像化し、ガラスの背面へ使う。ツールバー内のリンクからHTML in Canvas版と切り替え。               | Three.js      |
 
 URLはReact Routerの`HashRouter`で管理します。共通ヘッダーの下全体が描画領域で、UIは英語表記です。

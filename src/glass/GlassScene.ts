@@ -57,11 +57,11 @@ export async function createGlassScene(
   const distance = corner.max(0).length().sub(radius);
   // liquidGLのWebGPU実装と同じく、曲がりをベベルへ集中させて中央を平らに保つ。
   // https://github.com/naughtyduk/liquidGL/blob/main/scripts/liquidGL.js
-  const edge = distance.negate().smoothstep(0, 32).oneMinus();
+  const edge = distance.negate().smoothstep(0, 16).oneMinus();
   // TSLのdFdyは上向き。画面のYへ揃え、中央の勾配ゼロもそのまま通す。
   const gradient = vec2(distance.dFdx(), distance.dFdy().negate()).mul(devicePixelRatio);
   const direction = gradient.div(gradient.length().max(1));
-  const offset = direction.mul(edge.mul(16).add(edge.pow(8).mul(32)));
+  const offset = direction.mul(edge.mul(8).add(edge.pow(8).mul(16)));
   const background = texture(textures[0], screenUV.flipY());
   // ガラスと屈折・ぼかしの余白だけを切り出し、端末の解像度を保ったまま処理する。
   const padding = 64;
@@ -86,11 +86,11 @@ export async function createGlassScene(
   // 縁の屈折は鮮明に、中央の散乱は滑らかにつなぐ。
   const bent = mix(soft, sharp, edge);
   // AppleのRegularに倣い、薄い明色の層で文字のコントラストを面全体に揃える。
-  const body = mix(bent.rgb, vec3(1), 0.2);
-  // 方向に応じた細い縁で、ガラスの厚みを見せる。
+  const body = mix(bent.rgb, vec3(1), 0.4);
+  // 上下の縁へ光を回し、薄いセグメントでもガラスの厚みを見せる。
   const rim = distance.negate().smoothstep(0, 2).oneMinus();
-  const light = direction.dot(vec2(-0.6, -0.8));
-  const glass = mix(body, vec3(1), rim.mul(light.clamp()).mul(0.2));
+  const light = direction.dot(vec2(-0.6, -0.8)).abs();
+  const glass = mix(body, vec3(1), rim.mul(light).mul(0.6));
   const mask = distance.negate().smoothstep(0, 1);
   const material = own(
     signal,
