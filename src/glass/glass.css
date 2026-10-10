@@ -146,9 +146,7 @@
     line-height: 1;
     text-align: center;
     text-decoration: none;
-    transition:
-      color 0.2s,
-      background 0.2s;
+    transition: background 0.2s;
 
     &:hover {
       background: #fff4;
