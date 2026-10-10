@@ -59,7 +59,7 @@ export async function createSurfaceEngine(
   // 床の遠景用フォグを布へ掛けず、縦長画面やズームアウトでも誌面を消さない。
   cloth.material.fog = false;
   const initialPose = new Float32Array(picking.geometry.getAttribute("position").array);
-  const physics = createClothSimulation(initialPose, signal);
+  const physics = await createClothSimulation(initialPose, signal);
   const updateGeometry = createClothGeometry(cloth.geometry, picking.geometry);
   updateGeometry(physics.interpolatedPositions);
   // 布・床・影はシーン素材側で解放し、HTMLテクスチャは画面で所有する。

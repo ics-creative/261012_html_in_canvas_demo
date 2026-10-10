@@ -3,11 +3,20 @@ import { onCleanup } from "./lifecycle";
 
 /** 書き出したシーンを読み込み、共有する素材と影を一度だけ解放する。 */
 export async function loadSceneAsset(url: string, signal: AbortSignal) {
-  // loadAsyncは画像を一枚ずつ待つため、並列で読み込む標準loadをPromiseに包む。
+  const response = await fetch(url, { signal });
+  // 頂点を持つ大きなシーンだけgzip素材にし、標準APIで展開する。
+  const data = url.endsWith(".gz")
+    ? await new Response(
+        (await response.blob()).stream().pipeThrough(new DecompressionStream("gzip")),
+      ).json()
+    : await response.json();
+  // parseAsyncは画像を一枚ずつ待つため、並列で読む標準parseをPromiseに包む。
   const scene = await new Promise<THREE.Object3D>((resolve, reject) => {
     const manager = new THREE.LoadingManager();
     manager.onError = (path) => reject(new Error(`シーン素材を読み込めません: ${path}`));
-    new THREE.ObjectLoader(manager).load(url, resolve, undefined, reject);
+    new THREE.ObjectLoader(manager)
+      .setResourcePath(THREE.LoaderUtils.extractUrlBase(url))
+      .parse(data, resolve);
   });
   if (!(scene instanceof THREE.Scene)) throw new Error(`シーンではない素材です: ${url}`);
   const resources = new Set<{ dispose(): void }>();

@@ -36,7 +36,7 @@ Glassは32件の写真を縦にスクロールできます。ガラス部分だ�
 
 ## 開発
 
-Vite、React 19.3、TypeScript 7、React Routerを使用しています。描画はThree.jsとPixiJSのWebGPU、アニメーションはGSAP、ドラッグは`@use-gesture/vanilla`、スタイルはネイティブCSSです。
+Vite、React 19.3、TypeScript 7、React Routerを使用しています。描画はThree.jsとPixiJSのWebGPU、アニメーションはGSAP、ドラッグは`@use-gesture/vanilla`、布のWorker通信はComlink、スタイルはネイティブCSSです。
 
 | コマンド         | 用途                                                   |
 | ---------------- | ------------------------------------------------------ |
@@ -47,6 +47,8 @@ Vite、React 19.3、TypeScript 7、React Routerを使用しています。描画
 Three.jsは`HTMLTexture`、LaserはPixiJSの`HTMLSource`で元HTMLを取り込みます。CRTは`requestPaint()`と`drawElementImage()`でフォームをテクスチャへ反映します。CRT 3DはThree.jsのみで描画します。
 
 各デモは`lazy`・`Suspense`で読み込み、フォント・写真・HTMLの初回paint・GPU描画を終えてから表示します。CRTとCRT 3Dの入力は`Activity`で保持し、非表示中は描画を止めます。画面を離れる際のイベント解除とGPUリソースの解放は`AbortSignal`にまとめています。
+
+CRT 3Dの筐体・床・照明は、Three.jsのシーン素材[`public/scenes/retro.json.gz`](public/scenes/retro.json.gz)から読み込みます。曲面の頂点・法線・UVを事前計算し、起動時の形状生成を省いています。gzipは標準の`DecompressionStream`で展開し、元HTMLの画面と材質のノードだけを実行時に接続します。
 
 ## ディレクトリ構成
 

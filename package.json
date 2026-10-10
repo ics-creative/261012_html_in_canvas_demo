@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@use-gesture/vanilla": "^10.3.1",
+    "comlink": "^4.4.2",
     "gsap": "^3.15.0",
     "pixi-filters": "^6.1.5",
     "pixi.js": "8.22.0",

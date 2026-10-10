@@ -5,6 +5,7 @@ import { ao } from "three/addons/tsl/display/GTAONode.js";
 import { denoise } from "three/addons/tsl/display/DenoiseNode.js";
 import { createEnvironment } from "../canvas/environment";
 import { own } from "../canvas/lifecycle";
+import { materialRoughness, mx_noise_float, positionLocal } from "three/tsl";
 
 // 面光源のBRDF表を、WebGPUのライティングノードへ一度だけ登録する。
 THREE.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
@@ -12,54 +13,50 @@ THREE.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
 /** 面光源の反射と間接光の遮蔽で、樹脂の曲面・継ぎ目・接地面を描く。 */
 export function createRetroWorld(
   renderer: THREE.Renderer,
+  scene: THREE.Scene,
   camera: THREE.PerspectiveCamera,
   signal: AbortSignal,
 ) {
-  const scene = new THREE.Scene();
   // フォグを通した床の暗さへ背景を合わせ、平面の終端を見せない。
-  scene.background = new THREE.Color(0x080808);
-  scene.fog = new THREE.Fog(0x141414, 16, 40);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
   scene.environment = own(signal, createEnvironment(renderer, 256)).texture;
-  scene.environmentIntensity = 0.24;
-  const floor = new THREE.Mesh(
-    own(signal, new THREE.PlaneGeometry(80, 80)),
-    own(
-      signal,
-      new THREE.MeshStandardNodeMaterial({
-        color: 0x101010,
-        roughness: 0.8,
-        outputNode: TSL.output.toneMapping(THREE.AgXToneMapping),
-      }),
-    ),
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.receiveShadow = true;
-  scene.add(floor);
-
+  // 後傾した前面と丸い下腹を持つ、無彩色のiMac G3風CRT筐体を素材から読む。
+  // 前面全体を後傾させ、入力の投影座標も画面とベゼルの傾きへ合わせる。
+  // 背面へ向かって断面を楕円へ丸める。下腹を残し、箱型や対称の半球にしない。
+  // 厚い下部にCDスロットと左右の丸いスピーカーを収める。
+  // 開口部を画面より広くし、ベゼルの厚みでメニューバーを覆わない。
+  // スピーカーにも浅い曲面を持たせ、平坦な黒丸にしない。
+  // 筐体の下に低い脚だけを置き、独立した大きな台座をなくす。
+  // 渡された画面テクスチャは所有者に任せ、筐体の共有素材を一度だけ解放する。
+  const materials = new Map<THREE.Material, THREE.NodeMaterial>();
+  scene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh) || !(object.material instanceof THREE.Material)) return;
+    let material = materials.get(object.material);
+    if (!material) {
+      // 素材の数値を標準NodeLibraryで引き継ぎ、共有材質も一度だけ変換する。
+      material = own(signal, renderer.library.fromMaterial(object.material));
+      materials.set(object.material, material);
+      if (material instanceof THREE.MeshBasicNodeMaterial) {
+        // 発光する画面は、筐体のトーンマッピングや間接光の遮蔽を受けない。
+        material.contextNode = TSL.builtinAOContext(TSL.float(1));
+      } else material.outputNode = TSL.output.toneMapping(THREE.AgXToneMapping);
+      if (material instanceof THREE.MeshPhysicalNodeMaterial) {
+        // 成形樹脂の微細な粗さだけを変え、反射を均一な鏡面にしない。
+        // 粗さの基準値を素材から読み、前面と背面で同じシェーダーを共有する。
+        material.roughnessNode = materialRoughness.add(
+          mx_noise_float(positionLocal.mul(128)).mul(0.04),
+        );
+      }
+    }
+    object.material = material;
+  });
   // 主光を上方へ寄せ、反対側は面光源の細い反射で輪郭だけを拾う。
-  const key = new THREE.DirectionalLight(0xffffff, 1.6);
-  key.position.set(-4, 8, 6);
-  key.target.position.set(0, 2, 0);
-  key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  const key = scene.getObjectByName("Key");
+  if (!(key instanceof THREE.DirectionalLight)) throw new Error("CRTの照明がありません。");
   // 筐体は静止しているため、柔らかい影を初回だけ計算する。
   key.shadow.autoUpdate = false;
   key.shadow.needsUpdate = true;
-  Object.assign(key.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6, near: 0.2, far: 24 });
-  key.shadow.radius = 12;
-  key.shadow.blurSamples = 16;
-  key.shadow.normalBias = 0.02;
-  scene.add(key, key.target);
-  own(signal, key.shadow);
-  const softbox = new THREE.RectAreaLight(0xffffff, 8, 6, 4);
-  softbox.position.set(-4, 6, 6);
-  softbox.lookAt(0, 2, 0);
-  const rim = new THREE.RectAreaLight(0xffffff, 4, 2, 6);
-  rim.position.set(4, 4, -4);
-  rim.lookAt(0, 2, -1.6);
-  scene.add(softbox, rim);
 
   // 半解像度のGTAOを平滑化し、直射光やHTML画面を暗くせず間接光だけへ適用する。
   const normals = own(signal, TSL.pass(scene, camera, { samples: 0 }).setResolutionScale(0.5));

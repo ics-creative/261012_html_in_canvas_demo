@@ -8,7 +8,10 @@ import type { createClothSimulation } from "./ClothSimulation";
 export function createClothControls(
   camera: THREE.Camera,
   canvas: HTMLCanvasElement,
-  { physics, picking }: { physics: ReturnType<typeof createClothSimulation>; picking: THREE.Mesh },
+  {
+    physics,
+    picking,
+  }: { physics: Awaited<ReturnType<typeof createClothSimulation>>; picking: THREE.Mesh },
   signal: AbortSignal,
 ) {
   const orbit = createOrbit(camera, canvas, signal);

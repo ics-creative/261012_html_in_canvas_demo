@@ -4,8 +4,8 @@ import { createOrbit, createPointerRay, fitOrbit } from "../canvas/orbit";
 import { createHTMLHitTarget, type HitCanvas, type HTMLPoint } from "../canvas/HTMLHitTarget";
 import { onCleanup } from "../canvas/lifecycle";
 import { createCanvasTextures } from "../canvas/textures";
-import { createRetroComputer } from "./RetroComputer";
 import { createRetroWorld } from "./RetroWorld";
+import { loadSceneAsset } from "../canvas/sceneAsset";
 
 /** Three.jsのHTMLTextureで、入力できるHTMLをWebGPUの曲面画面へ直接描く。 */
 export async function createRetroScene(
@@ -14,16 +14,22 @@ export async function createRetroScene(
   signal: AbortSignal,
   ready: Promise<void>,
 ) {
-  const renderer = await createRenderer(host, signal, canvas);
+  const [renderer, scene] = await Promise.all([
+    createRenderer(host, signal, canvas),
+    loadSceneAsset("scenes/retro.json.gz", signal),
+  ]);
+  signal.throwIfAborted();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-  const world = createRetroWorld(renderer, camera, signal);
+  const world = createRetroWorld(renderer, scene, camera, signal);
   await ready;
   signal.throwIfAborted();
   // 描画と入力を同じCanvasにまとめ、元HTMLのpaintをThree.jsで直接受け取る。
   const { textures, painted } = createCanvasTextures([canvas], renderer, signal);
-  const model = createRetroComputer(textures[0]);
-  world.scene.add(model.computer);
-  onCleanup(signal, model.dispose);
+  const screen = scene.getObjectByName("screen");
+  if (!(screen instanceof THREE.Mesh) || !(screen.material instanceof THREE.MeshBasicNodeMaterial))
+    throw new Error("CRTの画面がありません。");
+  // CRTらしさはガラスの曲率に留め、HTMLの表示へノイズやグリッチを重ねない。
+  screen.material.map = textures[0];
   const orbit = createOrbit(camera, host, signal);
   orbit.target.set(0, 2.4, -0.4);
   orbit.maxPolarAngle = Math.PI * 0.48;
@@ -46,13 +52,13 @@ export async function createRetroScene(
 
   function hit(event: MouseEvent): HTMLPoint | null {
     // 筐体の向こう側に隠れた画面へは入力を通さない。
-    const point = aim(event).intersectObject(model.computer, true)[0];
-    if (point?.object !== model.screen || !point.uv || !point.face) return null;
+    const point = aim(event).intersectObject<THREE.Mesh>(scene, true)[0];
+    if (point?.object !== screen || !point.uv || !point.face) return null;
     return {
       index: 0,
       x: point.uv.x * size.width,
       y: (1 - point.uv.y) * size.height,
-      mesh: model.screen,
+      mesh: point.object,
       triangle: [point.face.a, point.face.b, point.face.c],
       flipX: false,
     };
