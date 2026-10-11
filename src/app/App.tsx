@@ -56,7 +56,8 @@ export function App() {
         <Route path="/glass" element={<GlassDemo />} />
         <Route path="/glass-css" element={<GlassDemo method="css" />} />
         <Route path="/glass-svg" element={<GlassDemo method="svg" />} />
-        <Route path="*" element={<Navigate to="/cloth" replace />} />
+        {/* 初期表示を01のTransitionsへ揃える。 */}
+        <Route path="*" element={<Navigate to="/transition/01" replace />} />
       </DemoViewport>
     </>
   );
