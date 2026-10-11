@@ -84,8 +84,8 @@
   padding: 2px;
   overflow: clip;
   border-radius: calc(var(--glass-height) / 2);
-  /* 白い半透明の下地を3方式で共有し、写真の色と屈折を透かす。 */
-  background: #fff4;
+  /* 屈折した写真へ白い半透明の下地を重ね、文字とアイコンを読みやすくする。 */
+  background: #fff8;
   /* 3方式の反射を共有し、上下の縁へ光を回してガラスの厚みを見せる。
      垂直方向だけの内側の影は、丸い縁に沿って左右の中央へ薄くなる。 */
   box-shadow:
@@ -128,8 +128,9 @@
     --selected-glass: 2;
   }
 
-  /* CSS版の背面ぼかしも、共通の白い下地へ重ねる。 */
+  /* CSS版は背面ぼかしと薄い白で、写真の色を透かす。 */
   &.glass-controls-css {
+    background: #fff4;
     backdrop-filter: blur(12px) saturate(1.4);
   }
 
