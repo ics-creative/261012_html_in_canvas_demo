@@ -15,6 +15,8 @@ HTML in CanvasとWebGPUを使うChrome Beta向けです。[http://localhost:5180
 
 [GitHub Pages](https://ics-creative.github.io/261012_html_in_canvas_demo/)で公開しています。`main`へのpushでGitHub Actionsがビルドし、`dist/`をデプロイします。Viteの`base: "./"`と素材の相対パスで、公開フォルダー内から読み込みます。
 
+共有用のOGP画像は[`public/ogp.png`](public/ogp.png)（1200×630px）です。タイトル・説明・画像URLは[`index.html`](index.html)で設定しています。
+
 ## デモ一覧
 
 | No.  | デモ                                                 | 内容・操作                                                                                                                               | 描画          |
