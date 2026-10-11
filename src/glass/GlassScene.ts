@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu";
-import { mix, rtt, screenUV, texture, uniform, uv, vec2, vec3 } from "three/tsl";
+import { mix, rtt, screenUV, texture, uniform, uv, vec2 } from "three/tsl";
 import { gaussianBlur } from "three/addons/tsl/display/GaussianBlurNode.js";
 import { createRenderer } from "../canvas/renderer";
 import { createCanvasTextures } from "../canvas/textures";
@@ -85,16 +85,12 @@ export async function createGlassScene(
   // ぼかしのRenderTargetは上端を原点として、画面と同じY方向で参照する。
   const soft = blur.getTextureNode().sample(refracted.sub(cropPosition).div(cropSize));
   // 縁の屈折は鮮明に、中央の散乱は滑らかにつなぐ。
-  const bent = mix(soft, sharp, edge);
-  // 上下の縁へ光を回し、薄いセグメントでもガラスの厚みを見せる。
-  const rim = distance.negate().smoothstep(0, 2).oneMinus();
-  const light = direction.dot(vec2(-0.6, -0.8)).abs();
-  const glass = mix(bent.rgb, vec3(1), rim.mul(light).mul(0.6));
+  const glass = mix(soft, sharp, edge);
   const mask = distance.negate().smoothstep(0, 1);
   const material = own(
     signal,
     new THREE.MeshBasicNodeMaterial({
-      colorNode: mix(background.rgb, glass, mask),
+      colorNode: mix(background.rgb, glass.rgb, mask),
       // SVG版の一覧は通常のDOMで表示し、GPUではガラス部分だけを重ねる。
       opacityNode: svg ? mask : null,
       transparent: svg,

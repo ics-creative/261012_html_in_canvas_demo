@@ -85,10 +85,11 @@
   border-radius: calc(var(--glass-height) / 2);
   /* 暗い下地を3方式で揃え、白いアイコンを明るい写真から浮かせる。 */
   background: #0008;
-  /* 上下の細い反射と落ち影で、写真から浮いたガラスの輪郭を見せる。 */
+  /* 3方式の反射を共有し、上下の縁へ光を回してガラスの厚みを見せる。
+     垂直方向だけの内側の影は、丸い縁に沿って左右の中央へ薄くなる。 */
   box-shadow:
-    inset 0 2px 2px #fffc,
-    inset 0 -2px 2px #fff8,
+    inset 0 2px #fff6,
+    inset 0 -2px #fff4,
     0 4px 16px #0003;
   color: var(--paper);
   user-select: none;
