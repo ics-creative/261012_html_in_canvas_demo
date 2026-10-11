@@ -4,12 +4,13 @@ import { onCleanup } from "./lifecycle";
 /** 書き出したシーンを読み込み、共有する素材と影を一度だけ解放する。 */
 export async function loadSceneAsset(url: string, signal: AbortSignal) {
   const response = await fetch(url, { signal });
-  // 頂点を持つ大きなシーンだけgzip素材にし、標準APIで展開する。
-  const data = url.endsWith(".gz")
-    ? await new Response(
-        (await response.blob()).stream().pipeThrough(new DecompressionStream("gzip")),
-      ).json()
-    : await response.json();
+  // HTTPで展開済みのJSONは直接読み、圧縮ファイルを標準APIで展開する。
+  const data =
+    url.endsWith(".gz") && response.headers.get("Content-Encoding") !== "gzip"
+      ? await new Response(
+          (await response.blob()).stream().pipeThrough(new DecompressionStream("gzip")),
+        ).json()
+      : await response.json();
   // parseAsyncは画像を一枚ずつ待つため、並列で読む標準parseをPromiseに包む。
   const scene = await new Promise<THREE.Object3D>((resolve, reject) => {
     const manager = new THREE.LoadingManager();

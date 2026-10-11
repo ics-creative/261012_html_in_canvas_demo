@@ -51,9 +51,9 @@ Vite、React 19.3、TypeScript 7、React Routerを使用しています。描画
 
 Three.jsは`HTMLTexture`、LaserはPixiJSの`HTMLSource`で元HTMLを取り込みます。CRTは`requestPaint()`と`drawElementImage()`でフォームをテクスチャへ反映します。CRT 3DはThree.jsのみで描画します。
 
-各デモは`lazy`・`Suspense`で読み込み、フォント・写真・HTMLの初回paint・GPU描画を終えてから表示します。CRTとCRT 3Dの入力は`Activity`で保持し、非表示中は描画を止めます。画面を離れる際のイベント解除とGPUリソースの解放は`AbortSignal`にまとめています。
+リンクを押すとURLと現在地を即座に切り替えます。`lazy`・`Suspense`でコードを読み込み、フォント・写真・HTMLの初回paint・GPU描画の準備中は共通のLoadingを表示します。CRTとCRT 3Dの入力は`Activity`で保持し、非表示中は描画を止めます。画面を離れる際のイベント解除とGPUリソースの解放は`AbortSignal`にまとめています。
 
-CRT 3Dの筐体・床・照明は、Three.jsのシーン素材[`public/scenes/retro.json.gz`](public/scenes/retro.json.gz)から読み込みます。曲面の頂点・法線・UVを事前計算し、起動時の形状生成を省いています。gzipは標準の`DecompressionStream`で展開し、元HTMLの画面と材質のノードだけを実行時に接続します。
+CRT 3Dの筐体・床・照明は、Three.jsのシーン素材[`public/scenes/retro.json.gz`](public/scenes/retro.json.gz)から読み込みます。曲面の頂点・法線・UVを事前計算し、起動時の形状生成を省いています。HTTPで展開済みのJSONは直接読み、圧縮ファイルは標準の`DecompressionStream`で展開します。元HTMLの画面と材質のノードだけを実行時に接続します。
 
 ## ディレクトリ構成
 

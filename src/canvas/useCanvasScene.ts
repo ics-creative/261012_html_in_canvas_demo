@@ -19,13 +19,17 @@ export function useCanvasScene<T>(
   const [scene, setScene] = useState<T>();
   const [initializing, startInitialization] = useTransition();
   const onReady = useContext(SceneReadyContext);
-  // 待機中に行き先が変わっても、完了通知には最新の遷移先を使う。
+  // 初期描画の完了を、そのデモのLoadingへ通知する。
   const notifyReady = useEffectEvent(onReady);
   useLayoutEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
     startInitialization(async () => {
       try {
+        // 最初のフレームでLoadingを描き、次のフレームからGPUの準備を始める。
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+        signal.throwIfAborted();
         // HTMLの読み込み中もGPUを準備し、取り込み直前だけreadyを待つ。
         async function readHTML() {
           const images = host.current!.parentElement!.querySelectorAll("img");

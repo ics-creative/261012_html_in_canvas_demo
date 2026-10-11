@@ -4,7 +4,7 @@ import { HashRouter } from "react-router";
 import { App } from "./app/App";
 
 // 公開フォルダーを保ち、HashRouterはハッシュ内のデモURLだけを切り替える。
-// 移動先の準備は即座に始め、表示交換のstartTransitionはDemoViewportで行う。
+// デモの切り替えを即座に反映し、描画の準備はLoadingで示す。
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HashRouter useTransitions={false}>
