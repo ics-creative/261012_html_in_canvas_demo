@@ -9,25 +9,28 @@ export const GlassControlsContext = createContext(createRef<HTMLElement>());
 export function GlassControls({ ref, css }: { ref: Ref<HTMLElement>; css: boolean }) {
   return (
     <nav ref={ref} className={`glass-controls${css ? " glass-controls-css" : ""}`}>
-      {/* レイヤー・画面・曲線のアイコンで各描画方式を区別する。 */}
+      {/* 塗りつぶしのレイヤー・写真・ペン先で各描画方式を区別する。 */}
       <NavLink to="/glass-css" style={{ anchorName: "--glass-css" }}>
         <svg viewBox="0 0 24 24">
-          <path d="m12 4 8 4-8 4-8-4Zm-8 8 8 4 8-4M4 16l8 4 8-4" />
+          <path d="M12 2 22 6 12 10 2 6ZM2 10l10 4 10-4v4l-10 4-10-4ZM2 16l10 4 10-4v2l-10 4-10-4Z" />
         </svg>
         <span>CSS</span>
       </NavLink>
       <NavLink to="/glass" end>
         <svg viewBox="0 0 24 24">
-          <rect x="2" y="4" width="20" height="16" rx="2" />
-          <path d="m4 16 6-6 4 4 4-2 2 4" />
+          <path
+            fillRule="evenodd"
+            d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM6 8a2 2 0 1 0 4 0 2 2 0 1 0-4 0ZM4 16h16l-4-4-4 2-4-4Z"
+          />
         </svg>
         <span>HTML in Canvas</span>
       </NavLink>
       <NavLink to="/glass-svg">
         <svg viewBox="0 0 24 24">
-          <path d="M4 18C4 4 20 20 20 6" />
-          <rect x="2" y="16" width="4" height="4" rx="2" />
-          <rect x="18" y="4" width="4" height="4" rx="2" />
+          <path
+            fillRule="evenodd"
+            d="M16 2l6 6-2 2-6-6ZM12 6l6 6-4 8-12 2 2-12Zm-6 10a2 2 0 1 0 4 0 2 2 0 1 0-4 0Z"
+          />
         </svg>
         <span>SVG</span>
       </NavLink>
