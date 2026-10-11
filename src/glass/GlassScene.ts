@@ -1,5 +1,5 @@
 import * as THREE from "three/webgpu";
-import { mix, rtt, screenUV, texture, uniform, uv, vec2 } from "three/tsl";
+import { mix, refract, rtt, screenUV, texture, uniform, uv, vec2, vec3 } from "three/tsl";
 import { gaussianBlur } from "three/addons/tsl/display/GaussianBlurNode.js";
 import { createRenderer } from "../canvas/renderer";
 import { createCanvasTextures } from "../canvas/textures";
@@ -60,8 +60,11 @@ export async function createGlassScene(
   // TSLのdFdyは上向き。画面のYへ揃え、中央の勾配ゼロもそのまま通す。
   const gradient = vec2(distance.dFdx(), distance.dFdy().negate()).mul(devicePixelRatio);
   const direction = gradient.div(gradient.length().max(1));
-  // 半径の半分を最大変位とし、背景の向きを保ったまま圧縮する。
-  const offset = direction.mul(edge.mul(radius).mul(0.5));
+  // 表面の傾きと屈折率1.5から光線を曲げ、背景の輪郭をレンズ状に拡大する。
+  const normal = vec3(direction.mul(edge), 1).normalize();
+  const ray = refract(vec3(0, 0, -1), normal, 2 / 3);
+  // 光線のXY/Zと光路長から参照位置を求め、縁の曲率を反映する。
+  const offset = ray.xy.div(ray.z).mul(radius.mul(2));
   const background = texture(textures[0], screenUV.flipY());
   // ガラスと屈折・ぼかしの余白だけを切り出し、端末の解像度を保ったまま処理する。
   const padding = 64;
@@ -84,8 +87,8 @@ export async function createGlassScene(
   const sharp = texture(textures[0], refracted.div(viewport).flipY());
   // ぼかしのRenderTargetは上端を原点として、画面と同じY方向で参照する。
   const soft = blur.getTextureNode().sample(refracted.sub(cropPosition).div(cropSize));
-  // 縁の屈折は鮮明に、中央の散乱は滑らかにつなぐ。
-  const glass = mix(soft, sharp, edge);
+  // 中央にも写真の輪郭を残し、縁へ向かって屈折像を鮮明につなぐ。
+  const glass = mix(soft, sharp, edge.mul(0.6).add(0.4));
   const mask = distance.negate().smoothstep(0, 1);
   const material = own(
     signal,
