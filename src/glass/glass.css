@@ -66,7 +66,8 @@
 
 .glass-controls {
   --glass-height: 96px;
-  --glass-selected: #0a84ff;
+  /* iOSの高コントラスト用の青を、暗いガラス上の選択色へ使う。 */
+  --glass-selected: #5cb8ff;
   --selected-glass: 1;
   position: absolute;
   z-index: 2;
@@ -82,6 +83,8 @@
   height: var(--glass-height);
   padding: 8px;
   border-radius: calc(var(--glass-height) / 2);
+  /* 暗い下地を3方式で揃え、白いアイコンを明るい写真から浮かせる。 */
+  background: #0008;
   /* 上下の細い反射と落ち影で、写真から浮いたガラスの輪郭を見せる。 */
   box-shadow:
     inset 0 2px 2px #fffc,
@@ -108,7 +111,7 @@
     translate: calc(var(--selected-glass) * (100% + 8px));
     border-radius: calc(var(--glass-height) / 2 - 8px);
     /* 選択部分を半透明の黒で沈め、青いアイコンと文字を際立たせる。 */
-    background: #0006;
+    background: #0008;
     box-shadow: inset 0 2px 4px #0002;
     pointer-events: none;
     /* 共通の減衰スプリングで、選択位置を少し越えてから収束する。 */
@@ -123,9 +126,8 @@
     --selected-glass: 2;
   }
 
-  /* CSS版も明暗を揃え、白いアイコンを写真から浮かせる。 */
+  /* CSS版の背面ぼかしも、共通の暗い下地へ重ねる。 */
   &.glass-controls-css {
-    background: #0004;
     backdrop-filter: blur(12px) saturate(1.4);
   }
 
@@ -167,6 +169,11 @@
   @media (width <= 768px) {
     --glass-height: 128px;
     width: calc(100% - 16px - var(--scrollbar-size));
+
+    /* 細いセグメントでも、複数行のラベル全体へ暗い背景を敷く。 */
+    &::after {
+      border-radius: 16px;
+    }
 
     a {
       gap: 0;

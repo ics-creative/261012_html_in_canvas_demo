@@ -55,19 +55,20 @@ export async function createGlassScene(
   const radius = size.y.div(2);
   const corner = point.abs().sub(size.div(2).sub(radius));
   const distance = corner.max(0).length().sub(radius);
-  // liquidGLのWebGPU実装と同じく、曲がりをベベルへ集中させて中央を平らに保つ。
-  // https://github.com/naughtyduk/liquidGL/blob/main/scripts/liquidGL.js
-  const edge = distance.negate().smoothstep(0, 16).oneMinus();
+  // 縁から中央まで厚みをなだらかに変え、屈折をカプセルの半径へ広げる。
+  const edge = distance.negate().smoothstep(0, radius).oneMinus();
   // TSLのdFdyは上向き。画面のYへ揃え、中央の勾配ゼロもそのまま通す。
   const gradient = vec2(distance.dFdx(), distance.dFdy().negate()).mul(devicePixelRatio);
   const direction = gradient.div(gradient.length().max(1));
-  const offset = direction.mul(edge.mul(8).add(edge.pow(8).mul(16)));
+  // 半径の半分を最大変位とし、背景の向きを保ったまま圧縮する。
+  const offset = direction.mul(edge.mul(radius).mul(0.5));
   const background = texture(textures[0], screenUV.flipY());
   // ガラスと屈折・ぼかしの余白だけを切り出し、端末の解像度を保ったまま処理する。
   const padding = 64;
   const cropSize = size.add(padding * 2);
   const cropPosition = position.sub(padding);
-  const cropUV = uv().flipY().mul(cropSize).add(cropPosition).div(viewport).flipY();
+  // QuadMeshとぼかしは上端原点。HTML画像の参照時にY座標を一度だけ変換する。
+  const cropUV = uv().mul(cropSize).add(cropPosition).div(viewport).flipY();
   const cropped = own(
     signal,
     rtt(
@@ -85,12 +86,10 @@ export async function createGlassScene(
   const soft = blur.getTextureNode().sample(refracted.sub(cropPosition).div(cropSize));
   // 縁の屈折は鮮明に、中央の散乱は滑らかにつなぐ。
   const bent = mix(soft, sharp, edge);
-  // 写真の明るさを落ち着かせ、白いラベルのコントラストを面全体に揃える。
-  const body = mix(bent.rgb, vec3(0), 0.2);
   // 上下の縁へ光を回し、薄いセグメントでもガラスの厚みを見せる。
   const rim = distance.negate().smoothstep(0, 2).oneMinus();
   const light = direction.dot(vec2(-0.6, -0.8)).abs();
-  const glass = mix(body, vec3(1), rim.mul(light).mul(0.6));
+  const glass = mix(bent.rgb, vec3(1), rim.mul(light).mul(0.6));
   const mask = distance.negate().smoothstep(0, 1);
   const material = own(
     signal,
