@@ -92,7 +92,7 @@
     inset 0 2px #fff6,
     inset 0 -2px #fff4,
     0 4px 16px #0003;
-  color: var(--paper);
+  color: #000;
   user-select: none;
 
   /* 初回の寸法計算を済ませ、描画領域の表示切り替えと同時に現す。 */
