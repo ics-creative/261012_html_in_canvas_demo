@@ -21,10 +21,10 @@ HTML in CanvasとWebGPUを使うChrome Beta向けです。[http://localhost:5180
 | ---- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | 01   | [Transitions](http://localhost:5180/#/transition/01) | 縦スクロールの誌面をタイルで切り替える。MV・ヘッダー・フッターのリンクから遷移。                                                         | Three.js      |
 | 02   | [Laser](http://localhost:5180/#/laser/01)            | 誌面内のリンクでランダムに切断。断片が同時に消え、次のページが拡大しながらフェードイン。                                                 | PixiJS        |
-| 03   | [Distortion](http://localhost:5180/#/distortion)     | 前後ボタンで切り替える。背景と文字を時間差で歪ませ、文字は退場後に次の内容が入場する。演出中はボタンを無効化。                           | Three.js      |
-| 04   | [Cloth](http://localhost:5180/#/cloth)               | 正面の平らなHTMLから始まり、風で揺れる布になる。布のドラッグでつかみ、背景または右ドラッグで視点を回転。ホイールでズーム。               | Three.js      |
-| 05   | [Book](http://localhost:5180/#/book)                 | 前後ボタン・紙端のクリックやドラッグでページをめくる。背景のドラッグで回転、ホイールでズーム。本文の選択と文字・画像の右クリックに対応。 | Three.js      |
-| 06   | [CRT](http://localhost:5180/#/crt)                   | 入力できるHTMLフォームにCRT・グリッチ・発光を重ねる。「Effects」でON/OFF。送信はデモ内の表示を更新する。                                 | PixiJS        |
+| 03   | [Cloth](http://localhost:5180/#/cloth)               | 正面の平らなHTMLから始まり、風で揺れる布になる。布のドラッグでつかみ、背景または右ドラッグで視点を回転。ホイールでズーム。               | Three.js      |
+| 04   | [Book](http://localhost:5180/#/book)                 | 前後ボタン・紙端のクリックやドラッグでページをめくる。背景のドラッグで回転、ホイールでズーム。本文の選択と文字・画像の右クリックに対応。 | Three.js      |
+| 05   | [CRT](http://localhost:5180/#/crt)                   | 入力できるHTMLフォームにCRT・グリッチ・発光を重ねる。「Effects」でON/OFF。送信はデモ内の表示を更新する。                                 | PixiJS        |
+| 06   | [Distortion](http://localhost:5180/#/distortion)     | 前後ボタンで切り替える。背景と文字を時間差で歪ませ、文字は退場後に次の内容が入場する。演出中はボタンを無効化。                           | Three.js      |
 | 07   | [CRT 3D](http://localhost:5180/#/crt-3d)             | iMac風の筐体の曲面画面にHTMLフォームを表示。筐体や背景のドラッグで視点を回転し、画面上では入力・選択・右クリックを操作。                 | Three.js      |
 | 08   | [Glass](http://localhost:5180/#/glass)               | アイコン付きセグメントで「CSS」「HTML in Canvas」「SVG」の3方式を切り替え、ぼかしと屈折を比較。                                          | CSS・Three.js |
 | 08-b | [Glass SVG](http://localhost:5180/#/glass-svg)       | 同じ写真一覧をSVGの`foreignObject`経由で画像化し、ガラスの背面へ使う。ツールバー内のリンクからHTML in Canvas版と切り替え。               | Three.js      |

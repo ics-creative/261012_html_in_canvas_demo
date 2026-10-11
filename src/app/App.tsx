@@ -19,15 +19,16 @@ const DistortionDemo = lazy(async () => ({
 const BookDemo = lazy(async () => ({ default: (await import("../book/BookDemo")).BookDemo }));
 const GlassDemo = lazy(async () => ({ default: (await import("../glass/GlassDemo")).GlassDemo }));
 
+// メニューの並び順から連番を付け、表示位置と番号を揃える。
 const demos = [
-  ["01", "transition", "Transitions"],
-  ["02", "laser", "Laser"],
-  ["03", "distortion", "Distortion"],
-  ["04", "cloth", "Cloth"],
-  ["05", "book", "Book"],
-  ["06", "crt", "CRT"],
-  ["07", "crt-3d", "CRT 3D"],
-  ["08", "glass", "Glass"],
+  ["transition", "Transitions"],
+  ["laser", "Laser"],
+  ["cloth", "Cloth"],
+  ["book", "Book"],
+  ["crt", "CRT"],
+  ["distortion", "Distortion"],
+  ["crt-3d", "CRT 3D"],
+  ["glass", "Glass"],
 ];
 
 /** デモごとのURLと共通ナビゲーションを定義する。 */
@@ -37,9 +38,9 @@ export function App() {
       <header className="header">
         <h1>HTML in Canvas</h1>
         <nav>
-          {demos.map(([number, id, label]) => (
+          {demos.map(([id, label], index) => (
             <NavLink key={id} to={`/${id}`} style={{ anchorName: `--demo-${id}` }}>
-              <span>{number}</span> {label}
+              <span>{String(index + 1).padStart(2, "0")}</span> {label}
             </NavLink>
           ))}
         </nav>
@@ -47,10 +48,10 @@ export function App() {
       <DemoViewport>
         <Route path="/transition/:page?" element={<TransitionDemo />} />
         <Route path="/laser/:page?" element={<TransitionDemo effect="laser" />} />
-        <Route path="/distortion" element={<DistortionDemo />} />
         <Route path="/cloth" element={<CanvasStage />} />
         <Route path="/book" element={<BookDemo />} />
         <Route path="/crt" element={<CRTDemo />} />
+        <Route path="/distortion" element={<DistortionDemo />} />
         <Route path="/crt-3d" element={<RetroDemo />} />
         <Route path="/glass" element={<GlassDemo />} />
         <Route path="/glass-css" element={<GlassDemo method="css" />} />
