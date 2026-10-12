@@ -26,7 +26,7 @@ HTML in CanvasとWebGPUを使うChrome Beta向けです。[http://localhost:5180
 | 03   | [Cloth](http://localhost:5180/#/cloth)               | 正面の平らなHTMLから始まり、風で揺れる布になる。布のドラッグでつかみ、背景または右ドラッグで視点を回転。ホイールでズーム。               | Three.js      |
 | 04   | [Book](http://localhost:5180/#/book)                 | 前後ボタン・紙端のクリックやドラッグでページをめくる。背景のドラッグで回転、ホイールでズーム。本文の選択と文字・画像の右クリックに対応。 | Three.js      |
 | 05   | [CRT](http://localhost:5180/#/crt)                   | 入力できるHTMLフォームにCRT・グリッチ・発光を重ねる。「Effects」でON/OFF。送信はデモ内の表示を更新する。                                 | PixiJS        |
-| 06   | [Distortion](http://localhost:5180/#/distortion)     | 前後ボタンで切り替える。背景と文字を時間差で歪ませ、文字は退場後に次の内容が入場する。演出中はボタンを無効化。                           | Three.js      |
+| 06   | [Distortion](http://localhost:5180/#/distortion)     | AV1動画の背景を前後ボタンで切り替える。動画とHTML文字を時間差で歪ませ、文字は退場後に次の内容が入場する。演出中はボタンを無効化。        | Three.js      |
 | 07   | [CRT 3D](http://localhost:5180/#/crt-3d)             | iMac風の筐体の曲面画面にHTMLフォームを表示。筐体や背景のドラッグで視点を回転し、画面上では入力・選択・右クリックを操作。                 | Three.js      |
 | 08   | [Glass](http://localhost:5180/#/glass)               | アイコン付きセグメントで「CSS」「HTML in Canvas」「SVG」の3方式を切り替え、ぼかしと屈折を比較。                                          | CSS・Three.js |
 | 08-b | [Glass SVG](http://localhost:5180/#/glass-svg)       | 同じ写真一覧をSVGの`foreignObject`経由で画像化し、ガラスの背面へ使う。ツールバー内のリンクからHTML in Canvas版と切り替え。               | Three.js      |
@@ -34,6 +34,8 @@ HTML in CanvasとWebGPUを使うChrome Beta向けです。[http://localhost:5180
 URLはReact Routerの`HashRouter`で管理します。共通ヘッダーの下全体が描画領域で、UIは英語表記です。
 
 TransitionsとLaserは縦スクロールに対応し、現在見えている範囲から遷移を開始します。見出しの表示にはCSSの`timeline-trigger`・`animation-trigger`と`sibling-index()`による時間差を使います。
+
+Distortionの背景動画は[`public/videos/`](public/videos/)に配置しています。提供された3本を1920×1080・10bitのAV1 MP4へ変換し、NormandyとLouvreは60fps、Parisは元の30fpsで使用します。音声を外してループ再生し、MP4の索引を先頭へ配置しています。Three.jsの`VideoTexture`を使い、表示中と遷移先だけを再生します。文字はHTML in Canvasで描き、静止時の文字選択を保ちます。
 
 Glassは32件の写真を縦にスクロールできます。「CSS」は通常のDOMと`backdrop-filter`だけで表示します。「HTML in Canvas」と「SVG」はガラス部分だけを端末の解像度で処理し、ガウスぼかしと縁の屈折を合成します。元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
 
@@ -64,7 +66,7 @@ CRT 3Dの筐体・床・照明は、Three.jsのシーン素材[`public/scenes/re
 | [`src/app/`](src/app/)               | ルーティング、共通ヘッダー、表示切り替え、スクロールバー。                                             |
 | [`src/canvas/`](src/canvas/)         | HTML取り込み、描画の初期化・破棄、ヒット領域、視点操作。`cloth/`に布の物理、`laser/`にレーザーの描画。 |
 | [`src/transition/`](src/transition/) | タイル遷移、誌面、見出しのスクロールアニメーション。Laserとページ切り替えの枠組みを共有。              |
-| [`src/distortion/`](src/distortion/) | 背景・文字の変形とぼかし。                                                                             |
+| [`src/distortion/`](src/distortion/) | 動画背景・HTML文字の変形とぼかし。                                                                     |
 | [`src/book/`](src/book/)             | 本のHTML誌面、紙の変形、シーン。                                                                       |
 | [`src/crt/`](src/crt/)               | CRTフォームとCRT 3D。                                                                                  |
 | [`src/glass/`](src/glass/)           | 写真一覧とガラスの屈折。                                                                               |

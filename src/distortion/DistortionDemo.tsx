@@ -9,28 +9,28 @@ import "./distortion.css";
 
 const pages = [
   {
-    title: "GALLERY",
-    image: "images/photos/BF_06888.jxl",
-    description: "Tall windows, chandeliers and reflected light along a crowded gallery.",
+    title: "NORMANDY",
+    video: "videos/P3253810-60fps.mp4",
+    description:
+      "Mont Saint-Michel sits above the tidal flats of Normandy. At low tide, the bay opens into wide stretches of sand and shallow water, with clouds moving across the sky.",
   },
   {
-    title: "DOME",
-    image: "images/photos/P3171108.jxl",
-    description: "Coloured glass and curved balconies beneath an ornate domed roof.",
+    title: "PARIS",
+    video: "videos/P3345690.mp4",
+    description:
+      "The Eiffel Tower overlooks the Seine at sunset. Boats travel along the river as the embankment lights come on, and the warm sky is reflected across the water below the bridges.",
   },
   {
-    title: "RIVER",
-    image: "images/photos/P3335279.jxl",
-    description: "The Eiffel Tower, riverside lights and a violet sky reflected in the Seine.",
+    title: "LOUVRE",
+    video: "videos/P3181732-60fps.mp4",
+    description:
+      "The glass pyramid sits in the Louvre courtyard, framed by ornate stone facades. Visitors move between the entrances as clouds pass overhead and reflect across the glass panels.",
   },
 ];
 
 function TextPage({ index, inert = false }: { index: number; inert?: boolean }) {
   return (
     <section className="distortion-type" inert={inert}>
-      <header>
-        <span>0{index + 1} / 03</span>
-      </header>
       <div className="distortion-copy">
         <h2>{pages[index].title}</h2>
         <p>{pages[index].description}</p>
@@ -39,7 +39,7 @@ function TextPage({ index, inert = false }: { index: number; inert?: boolean }) 
   );
 }
 
-/** HTMLの背景と文字を、時間差のある風の歪みで切り替えるデモ。 */
+/** AV1動画とHTMLの文字を、時間差のある風の歪みで切り替えるデモ。 */
 export function DistortionDemo() {
   const stage = useRef<HTMLElement>(null);
   const [current, setCurrent] = useState(0);
@@ -52,6 +52,7 @@ export function DistortionDemo() {
     return createDistortionScene(
       element,
       Array.from(stage.current!.querySelectorAll<HTMLCanvasElement>(".capture-staging canvas")),
+      Array.from(stage.current!.querySelectorAll("video")),
       signal,
       setScale,
       () => flushSync(() => setAnimating(true)),
@@ -83,13 +84,9 @@ export function DistortionDemo() {
           onGo={(step) => scene?.go(step)}
         />
         {pages.map((page, index) => (
-          <div key={index}>
-            <HTMLTexture width={width} height={height}>
-              {/* 歪ませる写真をHTMLとして配置する。 */}
-              <div className="distortion-art">
-                <img src={page.image} alt="" />
-              </div>
-            </HTMLTexture>
+          <div key={page.video}>
+            {/* 背景はVideoTextureへ渡し、文字のHTMLだけをCanvasへ取り込む。 */}
+            <video src={page.video} muted loop playsInline preload="metadata" hidden />
             <HTMLTexture width={width} height={height}>
               <TextPage index={index} />
             </HTMLTexture>

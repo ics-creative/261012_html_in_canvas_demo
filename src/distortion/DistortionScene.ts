@@ -14,19 +14,32 @@ export const height = 720;
 const FLOW_DURATION = 1.2;
 const STAGGER = 0.08;
 
-/** 背景の変形に合わせてHTML面を順に流し、文字の退場後に次の文字を入場させる。 */
+/** 動画背景の変形に合わせてHTML面を順に流し、文字を入れ替える。 */
 export async function createDistortionScene(
   host: HTMLElement,
   canvases: HTMLCanvasElement[],
+  videos: HTMLVideoElement[],
   signal: AbortSignal,
   onScale: (scale: number) => void,
   onStart: () => void,
   onComplete: (page: number) => void,
 ) {
   const renderer = await createRenderer(host, signal);
-  const { textures, painted } = createCanvasTextures(canvases, renderer, signal, invalidate);
+  // 表示中と遷移先の動画を再生し、画面を離れると全動画を停止する。
+  onCleanup(signal, () => videos.forEach((video) => video.pause()));
+  const backgrounds = videos.map((video) => {
+    const texture = own(signal, new THREE.VideoTexture(video));
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  });
+  // 最初の動画のデコードを待ち、Loadingから描画済みの背景へ切り替える。
+  await videos[0].play();
+  signal.throwIfAborted();
+  backgrounds[0].needsUpdate = true;
+  const { textures, painted } = createCanvasTextures(canvases, renderer, signal);
   const camera = new THREE.PerspectiveCamera(40, 1, 1, 20000);
-  const background = createBackgroundNode(textures[0], textures[2]);
+  // 入力を別動画から初期化し、切り替え元と先のUniformを分離する。
+  const background = createBackgroundNode(backgrounds[0], backgrounds[1]);
   const scene = new THREE.Scene();
   scene.backgroundNode = own(signal, background.color);
   const geometry = own(signal, new THREE.PlaneGeometry(width, height, 160, 96));
@@ -35,17 +48,15 @@ export async function createDistortionScene(
   const sheets = Array.from({ length: 2 }, createSheet);
   const [outgoing, incoming] = sheets;
   let current = 0;
-  let dirty = true;
 
   const timeline = gsap.timeline({
     paused: true,
-    onUpdate: invalidate,
-    // 最後のonUpdateで描画を予約し、停止状態をHTMLへの復帰に使う。
+    // 描画ループで最終フレームを確定し、停止状態をHTMLへの復帰に使う。
     onComplete: () => timeline.pause(),
   });
 
   function createSheet() {
-    const surface = createForegroundMaterial(textures[1], height, flow);
+    const surface = createForegroundMaterial(textures[0], height, flow);
     // 描画先と、標準ぼかしが持つ中間バッファを解放する。
     for (const resource of [surface.material, surface.source, surface.blur]) own(signal, resource);
     const mesh = new THREE.Mesh(geometry, surface.material);
@@ -55,7 +66,7 @@ export async function createDistortionScene(
   }
 
   function prepareSheet(sheet: ReturnType<typeof createSheet>, index: number, settled: boolean) {
-    sheet.image.value = textures[index * 2 + 1];
+    sheet.image.value = textures[index];
     // 読み込み済みのHTMLを、ページ変更時だけぼかし用の入力へ描く。
     sheet.source.textureNeedsUpdate = true;
     sheet.motion.entry.value.setScalar(settled ? 1 : 0);
@@ -66,20 +77,32 @@ export async function createDistortionScene(
   }
 
   /** 風の流れを保ちながら前後のページへ切り替える。 */
-  function go(step: -1 | 1) {
+  async function go(step: -1 | 1) {
     // 完了した演出を片付け、毎回一つの遷移を先頭から再生する。
     timeline.clear().pause(0);
+    const next = gsap.utils.wrap(0, videos.length, current + step);
     const uniforms = background.motion;
-    uniforms.fromMap.value = textures[current * 2];
-    prepareSheet(outgoing, current, true);
-    current = gsap.utils.wrap(0, textures.length / 2, current + step);
-    prepareSheet(incoming, current, false);
-    uniforms.toMap.value = textures[current * 2];
+    uniforms.fromMap.value = backgrounds[current];
+    uniforms.toMap.value = backgrounds[next];
     uniforms.progress.value = 0;
-    uniforms.direction.value = step;
+    prepareSheet(outgoing, current, true);
+    incoming.mesh.visible = false;
     // 静止文字を先に描いてからHTMLを隠し、両ボタンを同じフレームで無効にする。
     renderer.render(scene, camera);
     onStart();
+    try {
+      // 遷移先の最初のフレームを待ってから、背景と文字の演出を始める。
+      await videos[next].play();
+      signal.throwIfAborted();
+    } catch (error) {
+      // 画面離脱で中断された再生は、その画面の解放処理へ合流する。
+      if (!signal.aborted) throw error;
+      return;
+    }
+    current = next;
+    backgrounds[current].needsUpdate = true;
+    prepareSheet(incoming, current, false);
+    uniforms.direction.value = step;
     // 背景の変形時間を文字の退場と入場に合わせ、終わる時刻を揃える。
     timeline.to(
       uniforms.progress,
@@ -114,7 +137,7 @@ export async function createDistortionScene(
     const viewHeight = host.clientHeight;
     const scale = Math.min(viewWidth / width, viewHeight / height) / 1.08;
     camera.aspect = viewWidth / viewHeight;
-    const aspectRatio = camera.aspect / (width / height);
+    const aspectRatio = camera.aspect / (videos[0].videoWidth / videos[0].videoHeight);
     background.motion.coverScale.value.set(Math.min(1, aspectRatio), Math.min(1, 1 / aspectRatio));
     camera.position.z =
       viewHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * scale);
@@ -122,15 +145,9 @@ export async function createDistortionScene(
     renderer.setSize(viewWidth, viewHeight);
     // 表示バッファの解像度にHTMLを揃え、描画の切り替え時も文字の鮮明さを保つ。
     onScale(scale);
-    invalidate();
-  }
-
-  function invalidate() {
-    dirty = true;
   }
 
   function render() {
-    if (!dirty) return;
     // ぼかしがゼロの面では、中間バッファの描画も止める。
     for (const { mesh, motion, blur } of sheets) {
       if (!mesh.visible) continue;
@@ -141,9 +158,13 @@ export async function createDistortionScene(
     const complete = timeline.paused() && incoming.mesh.visible;
     if (complete) incoming.mesh.visible = false;
     renderer.render(scene, camera);
-    dirty = false;
     // 背景の最終描画を済ませてから、GPU文字を元HTMLへ切り替える。
-    if (complete) onComplete(current);
+    if (complete) {
+      videos.forEach((video, index) => {
+        if (index !== current) video.pause();
+      });
+      onComplete(current);
+    }
   }
 
   /** アニメーションと描画用リソースを解放する。 */

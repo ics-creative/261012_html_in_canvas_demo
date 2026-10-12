@@ -2,7 +2,7 @@ import * as THREE from "three/webgpu";
 import * as TSL from "three/tsl";
 import { gaussianBlur } from "three/addons/tsl/display/GaussianBlurNode.js";
 
-/** 下から上へ進む斜めの波で、背景の写真を切り替える。 */
+/** 下から上へ進む斜めの波で、背景の動画を切り替える。 */
 export function createBackgroundNode(from: THREE.Texture, to: THREE.Texture) {
   const motion = {
     fromMap: TSL.texture(from),
@@ -27,7 +27,7 @@ export function createBackgroundNode(from: THREE.Texture, to: THREE.Texture) {
   const front = edge.mul(edge).mul(-28).exp().mul(strength);
   const drift = TSL.vec2(direction.mul(-0.2), 1).normalize();
   const tangent = TSL.vec2(drift.y, drift.x.negate());
-  // 写真の揺らぎを先に求め、入退場の歪みへ同じ向きで加える。
+  // 背景の揺らぎを先に求め、入退場の歪みへ同じ向きで加える。
   const fromSway = across.mul(18).sub(progress.mul(8)).sin().mul(0.02);
   const toSway = across.mul(14).add(progress.mul(6)).add(2).sin().mul(0.04);
   const centered = coord.sub(0.5);
@@ -46,7 +46,8 @@ export function createBackgroundNode(from: THREE.Texture, to: THREE.Texture) {
     toMap.sample(toUV.sub(0.5).mul(coverScale).add(0.5)),
     edge.smoothstep(-0.12, 0.12),
   );
-  return { color, motion };
+  // 見出し側を暗くして、再生中もHTML文字の可読性を保つ。
+  return { color: color.rgb.mul(TSL.mix(0.6, 0.8, coord.x)), motion };
 }
 
 /** 静的な風の勾配を一度描き、各文字面で共有する。 */
@@ -75,7 +76,7 @@ export function createForegroundMaterial(
   };
   const { entry, exit, wind, seed } = motion;
   // 見出しと説明文の間の空白で進捗をつなぎ、HTML面全体を流す。
-  const heading = TSL.uv().y.smoothstep(0.46, 0.5);
+  const heading = TSL.uv().y.smoothstep(0.5, 0.54);
   const arrival = TSL.mix(entry.y, entry.x, heading);
   const departure = TSL.mix(exit.y, exit.x, heading);
   const distance = departure.mul(0.8).sub(arrival.oneMinus().mul(0.6));
