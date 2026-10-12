@@ -154,8 +154,8 @@ export async function createBookScene(
   function setSpread(leftSpread = spread, rightSpread = spread) {
     [left, right].forEach((sheet, side) => {
       const index = side ? rightSpread : leftSpread;
-      const texture = pages[index * 2 + side];
-      sheet.setTextures(texture);
+      // 表は右、裏は左の誌面。別画像でGPUの表裏の参照を独立させる。
+      sheet.setTextures(pages[index * 2 + 1], pages[index * 2]);
       const height = side ? heights(index).right : heights(index).left;
       sheet.pose(1 - side, height);
       const thickness = height - 0.12;
