@@ -1,23 +1,17 @@
 import { lazy } from "react";
-import { NavLink, Navigate, Route } from "react-router";
+import { NavLink, Navigate, Route, useLocation } from "react-router";
 import { DemoViewport } from "./DemoViewport";
 import "./app.css";
 import "./scrollbar.css";
 
 // デモごとのJSを遅延読み込みし、Three.jsとPixiJSは使用する画面で読み込む。
-const CanvasStage = lazy(async () => ({
-  default: (await import("../canvas/CanvasStage")).CanvasStage,
-}));
-const TransitionDemo = lazy(async () => ({
-  default: (await import("../transition/TransitionDemo")).TransitionDemo,
-}));
-const CRTDemo = lazy(async () => ({ default: (await import("../crt/CRTDemo")).CRTDemo }));
-const RetroDemo = lazy(async () => ({ default: (await import("../crt/RetroDemo")).RetroDemo }));
-const DistortionDemo = lazy(async () => ({
-  default: (await import("../distortion/DistortionDemo")).DistortionDemo,
-}));
-const BookDemo = lazy(async () => ({ default: (await import("../book/BookDemo")).BookDemo }));
-const GlassDemo = lazy(async () => ({ default: (await import("../glass/GlassDemo")).GlassDemo }));
+const CanvasStage = lazy(() => import("../canvas/CanvasStage"));
+const TransitionDemo = lazy(() => import("../transition/TransitionDemo"));
+const CRTDemo = lazy(() => import("../crt/CRTDemo"));
+const RetroDemo = lazy(() => import("../crt/RetroDemo"));
+const DistortionDemo = lazy(() => import("../distortion/DistortionDemo"));
+const BookDemo = lazy(() => import("../book/BookDemo"));
+const GlassDemo = lazy(() => import("../glass/GlassDemo"));
 
 // メニューの並び順から連番を付け、表示位置と番号を揃える。
 const demos = [
@@ -33,11 +27,14 @@ const demos = [
 
 /** デモごとのURLと共通ナビゲーションを定義する。 */
 export function App() {
+  const { pathname } = useLocation();
+  const demo = pathname.startsWith("/glass") ? "glass" : pathname.split("/")[1];
+
   return (
     <>
       <header className="header">
         <h1>HTML in Canvas</h1>
-        <nav>
+        <nav style={{ positionAnchor: `--demo-${demo}` }}>
           {demos.map(([id, label], index) => (
             <NavLink key={id} to={`/${id}`} style={{ anchorName: `--demo-${id}` }}>
               <span>{String(index + 1).padStart(2, "0")}</span> {label}

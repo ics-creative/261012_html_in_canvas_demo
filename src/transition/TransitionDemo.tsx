@@ -65,34 +65,32 @@ function TransitionViewport({
   }, [page, engine]);
 
   return (
-    <main className="experiment">
-      <section
-        ref={stage}
-        className={`canvas-stage transition-stage effect-${effect} ${engine ? "has-scene" : ""} ${animating ? "is-transitioning" : ""}`}
+    <main
+      ref={stage}
+      className={`experiment transition-stage ${engine ? "has-scene" : ""} ${animating ? "is-transitioning" : ""}`}
+    >
+      <div className="transition-host" ref={host} />
+      <div
+        ref={document}
+        className="transition-document scrollable"
+        inert={animating}
+        onScroll={(event) => engine?.scrollTo(displayed, event.currentTarget.scrollTop)}
       >
-        <div className="transition-host" ref={host} />
-        <div
-          ref={document}
-          className="transition-document scrollable"
-          inert={animating}
-          onScroll={(event) => engine?.scrollTo(displayed, event.currentTarget.scrollTop)}
-        >
-          <TransitionPage page={displayed} basePath={basePath} laser={laser} />
-        </div>
-        {catalog.map(({ id }, index) => (
-          <HTMLTexture key={id}>
-            <div className="capture-page">
-              <TransitionPage page={index} basePath={basePath} laser={laser} />
-            </div>
-          </HTMLTexture>
-        ))}
-      </section>
+        <TransitionPage page={displayed} basePath={basePath} laser={laser} />
+      </div>
+      {catalog.map(({ id }, index) => (
+        <HTMLTexture key={id}>
+          <div className="capture-page">
+            <TransitionPage page={index} basePath={basePath} laser={laser} />
+          </div>
+        </HTMLTexture>
+      ))}
     </main>
   );
 }
 
 /** URLに対応したHTMLページをレーザーまたはタイルで切り替える。 */
-export function TransitionDemo({ effect = "tiles" }: { effect?: Effect }) {
+export default function TransitionDemo({ effect = "tiles" }: { effect?: Effect }) {
   const { page: id } = useParams();
   const catalog = effect === "laser" ? laserPages : pages;
   const page = catalog.findIndex((item) => item.id === id);

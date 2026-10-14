@@ -18,10 +18,10 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
   // 通常合成の芯を最後にまとめ、合成モードごとの描画順を揃える。
   const sparkCores = new RenderLayer();
   const timeline = gsap.timeline({ paused: true });
-  const sparks = new Set<Container>();
   let pieces: Piece[] = [];
   let width = 0;
   let height = 0;
+  let impactAngle = 0;
   view.addChild(paper, lights, sparkCores);
 
   function createGlow(
@@ -73,13 +73,13 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
     for (const piece of pieces) removePiece(piece);
     pieces = [];
     for (const child of lights.removeChildren()) child.destroy({ children: true });
-    sparks.clear();
   }
 
   function emitSparks(start: Vertex, end: Vertex, direction: Vertex, at: number) {
     const length = Math.hypot(end.x - start.x, end.y - start.y);
     const count = Math.min(4, Math.ceil(length / 48));
-    for (let index = 0; index < count && sparks.size < MAX_SPARKS; index++) {
+    for (let index = 0; index < count; index++) {
+      if (sparkCores.renderLayerChildren.length >= MAX_SPARKS) return;
       const distance = Math.random();
       const streak = Math.random() < 0.4;
       const speed = streak ? 480 + Math.random() * 480 : 160 + Math.random() * 320;
@@ -101,14 +101,12 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
       spark.alpha = 0.4;
       spark.position.set(x, y);
       spark.rotation = Math.atan2(vy, vx);
-      sparks.add(spark);
       lights.addChild(spark);
       // 向きを保って減速し、細い残光の間に短い微粒子を残す。
       const decay = Math.exp(-SPARK_DRAG * life);
       const flight = gsap.timeline({
         defaults: { duration: life },
         onComplete() {
-          sparks.delete(spark);
           spark.destroy({ children: true });
         },
       });
@@ -174,7 +172,7 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
     });
   }
 
-  function fire(index: number, at: number, onImpact: (strength: number) => void) {
+  function fire(index: number, time: number) {
     const angle = Math.random() * Math.PI * 2;
     const reach = Math.hypot(width, height);
     const dx = Math.cos(angle) * reach;
@@ -191,25 +189,42 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
     line.addChild(beam, head);
     lights.addChild(line);
     timeline
-      .set(line, { visible: true }, at)
-      .to(beam.scale, { x: 1, duration: 0.08, ease: "none" }, at)
-      .to(head, { x: reach * 2, duration: 0.08, ease: "none" }, at)
-      .to(head, { alpha: 0, duration: 0.08 }, at + 0.08)
-      .to(beam, { alpha: 0, duration: 0.24, ease: "power2.out" }, at + 0.08)
+      .set(line, { visible: true }, time)
+      .to(beam.scale, { x: 1, duration: 0.08, ease: "none" }, time)
+      .to(head, { x: reach * 2, duration: 0.08, ease: "none" }, time)
+      .to(head, { alpha: 0, duration: 0.08 }, time + 0.08)
+      .to(beam, { alpha: 0, duration: 0.24, ease: "power2.out" }, time + 0.08)
       .call(
         () => {
-          slice(start, end, at + 0.08);
-          // 48発の連射を、3回のカメラへの衝撃にまとめる。
+          slice(start, end, time + 0.08);
+          // 48発の連射で視点を3回押し戻し、切断のまとまりに合わせて衝撃をつける。
           const strength = IMPACTS[index + 1];
-          if (strength) onImpact(strength);
+          if (strength) {
+            const at = timeline.time();
+            timeline
+              .to(
+                view,
+                {
+                  x: -Math.cos(impactAngle) * strength,
+                  y: -Math.sin(impactAngle) * strength,
+                  rotation: Math.cos(impactAngle) * strength * 0.0004,
+                  duration: 0.04,
+                  ease: "power4.out",
+                },
+                at,
+              )
+              .to(view, { x: 0, y: 0, rotation: 0, duration: 0.24, ease: "expo.out" }, at + 0.04);
+          }
         },
         [],
-        at + 0.08,
+        time + 0.08,
       )
-      .call(() => line.destroy({ children: true }), [], at + 0.32);
+      .call(() => line.destroy({ children: true }), [], time + 0.32);
   }
 
-  function cut(texture: Texture, onImpact: (strength: number) => void) {
+  function cut(texture: Texture) {
+    // 一度の連射では衝撃の向きを揃える。
+    impactAngle = Math.random() * Math.PI * 2;
     // DPRを保った表示領域の寸法を使い、スクロール中の誌面をそのまま切る。
     width = texture.width / devicePixelRatio;
     height = texture.height / devicePixelRatio;
@@ -229,7 +244,7 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
     ];
     for (let index = 0; index < SHOT_COUNT; index++) {
       const at = index === 0 ? 0 : Math.sqrt((index + Math.random() * 0.8) / SHOT_COUNT) * 1.2;
-      fire(index, at, onImpact);
+      fire(index, at);
     }
     // 断面が離れた余韻を残してから、全ての断片を同じ瞬間に消す。
     timeline.call(clear, [], 2.4);

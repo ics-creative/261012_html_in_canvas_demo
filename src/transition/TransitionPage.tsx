@@ -19,7 +19,7 @@ export function TransitionPage({
 
   return (
     // 写真と重ねた文字・リンクを同じHTMLとして切断する。
-    <article className={`html-page ${laser ? "laser-page" : "transition-page"}`}>
+    <article className={`html-page ${laser ? "laser-page" : ""}`}>
       <section className="page-hero">
         {/* 全面の写真も元HTMLに含め、タイルと静止画面の見た目を揃える。 */}
         <img className="hero-photo" src={content.image} alt="" />

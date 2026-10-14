@@ -39,7 +39,6 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     align-content: start;
     gap: 32px;
-    min-height: 0;
     height: 100%;
     margin: 0;
     padding: 32px var(--gutter);
@@ -95,11 +94,6 @@
     0 4px 16px #0003;
   color: #000;
   user-select: none;
-
-  /* 初回の寸法計算を済ませ、描画領域の表示切り替えと同時に現す。 */
-  .demo-viewport:not([id="/glass"]) & {
-    visibility: hidden;
-  }
 
   /* 等幅リンクへカプセル形の背景を重ね、GPUの準備中も横移動を合成する。 */
   &::after {

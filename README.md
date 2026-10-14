@@ -57,7 +57,7 @@ Three.jsは`HTMLTexture`、LaserはPixiJSの`HTMLSource`で元HTMLを取り込�
 
 リンクを押すとURLと現在地を即座に切り替えます。`lazy`・`Suspense`でコードを読み込み、フォント・写真・HTMLの初回paint・GPU描画の準備中は共通のLoadingを表示します。各ページは離脱時に破棄し、再訪問時に初期化します。画面を離れる際のイベント解除とGPUリソースの解放は`AbortSignal`にまとめています。
 
-CRT 3Dは、[モデル](public/scenes/retro.json.gz)を読み込み、HTMLフォームをモニターの画面に表示します。
+CRT 3Dは、[モデル](public/scenes/crt-3d.json.gz)を読み込み、HTMLフォームをモニターの画面に表示します。
 筐体の形状・照明・材質はモデルに保存しています。
 
 ## ディレクトリ構成

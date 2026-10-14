@@ -2,11 +2,7 @@ import * as THREE from "three/webgpu";
 import { onCleanup } from "./lifecycle";
 
 /** シーン素材を読み込み、ページ離脱時にGPU資源を解放する。 */
-export async function loadSceneAsset(
-  url: string,
-  signal: AbortSignal,
-  loader = new THREE.ObjectLoader(),
-) {
+export async function loadSceneAsset(url: string, signal: AbortSignal) {
   const response = await fetch(url, { signal });
   // HTTPで展開済みのJSONは直接読み、圧縮ファイルを標準APIで展開する。
   const data =
@@ -17,8 +13,15 @@ export async function loadSceneAsset(
       : await response.json();
   // parseAsyncは画像を一枚ずつ待つため、並列で読む標準parseをPromiseに包む。
   const scene = await new Promise<THREE.Object3D>((resolve, reject) => {
-    loader.manager = new THREE.LoadingManager();
-    loader.manager.onError = (path) => reject(new Error(`シーン素材を読み込めません: ${path}`));
+    const manager = new THREE.LoadingManager();
+    manager.onError = (path) => reject(new Error(`シーン素材を読み込めません: ${path}`));
+    // モデルに保存された材質を、WebGPU用の材質として直接読み込む。
+    const loader = new THREE.NodeObjectLoader(manager);
+    Object.assign(loader.nodeMaterials, {
+      MeshBasicNodeMaterial: THREE.MeshBasicNodeMaterial,
+      MeshStandardNodeMaterial: THREE.MeshStandardNodeMaterial,
+      MeshPhysicalNodeMaterial: THREE.MeshPhysicalNodeMaterial,
+    });
     loader.setResourcePath(THREE.LoaderUtils.extractUrlBase(url)).parse(data, resolve);
   });
   if (!(scene instanceof THREE.Scene)) throw new Error(`シーンではない素材です: ${url}`);

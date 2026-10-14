@@ -45,6 +45,5 @@ export function createBookWorld(renderer: THREE.Renderer, scene: THREE.Scene, si
     camera,
     book,
     stacks,
-    render: () => renderer.render(scene, camera),
   };
 }

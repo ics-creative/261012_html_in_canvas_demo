@@ -21,7 +21,7 @@ export async function createBookScene(
   host: HTMLElement,
   canvas: HitCanvas,
   signal: AbortSignal,
-  ready: Promise<void>,
+  ready: Promise<unknown>,
   onChange: (spread: number, turning: boolean) => void,
 ) {
   // シーン素材・紙の繊維・GPUを、並列で読み込む。
@@ -43,7 +43,7 @@ export async function createBookScene(
   // 天板の上面を本の底へ合わせ、有限の厚みと丸い端部を見せる。
   // 木目の法線と表紙の布目を強め、マットなウォールナットの質感をつける。
   // 背は紙の綴じ目の下へ納め、表紙に続く本の輪郭をつくる。
-  const world = createBookWorld(renderer, scene, signal);
+  const { camera, book, stacks } = createBookWorld(renderer, scene, signal);
   // フォントと写真の読み込みを待ち、完成したHTMLからHTMLTextureを作る。
   await ready;
   signal.throwIfAborted();
@@ -54,7 +54,6 @@ export async function createBookScene(
   paperGrain.flipY = false;
   paperGrain.anisotropy = 8;
   const { textures: pages, painted } = createCanvasTextures([canvas], renderer, signal);
-  const { camera, book, stacks } = world;
   const hitTarget = createHTMLHitTarget(
     canvas,
     pages.map((page) => page.image),
@@ -260,10 +259,10 @@ export async function createBookScene(
   await painted;
   signal.throwIfAborted();
   // めくる紙も同じシェーダーを使うため、初回は表示中の見開きだけを描く。
-  world.render();
+  renderer.render(scene, camera);
   renderer.setAnimationLoop(() => {
     if (orbit.enabled) orbit.update();
-    world.render();
+    renderer.render(scene, camera);
   });
   return { turnPage };
 }

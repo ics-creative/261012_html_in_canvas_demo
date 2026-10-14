@@ -136,7 +136,8 @@ canvas {
       /* ピルを固定配置で描き、スプリングの行き過ぎまで表示する。 */
       position: fixed;
       z-index: -1;
-      position-anchor: var(--current-demo);
+      /* アンカー名は固定し、現在地に応じて背景の参照先だけを交換する。 */
+      position-anchor: inherit;
       top: anchor(top);
       left: anchor(left);
       width: anchor-size(width);
@@ -149,39 +150,6 @@ canvas {
         top 0.8s var(--navigation-spring),
         width 0.8s var(--navigation-spring),
         height 0.8s var(--navigation-spring);
-    }
-
-    /* アンカー名は固定し、現在地に応じて背景の参照先だけを交換する。 */
-    &:has(a[href$="#/laser"]:target-current) {
-      --current-demo: --demo-laser;
-    }
-
-    &:has(a[href$="#/cloth"]:target-current) {
-      --current-demo: --demo-cloth;
-    }
-
-    &:has(a[href$="#/book"]:target-current) {
-      --current-demo: --demo-book;
-    }
-
-    &:has(a[href$="#/transition"]:target-current) {
-      --current-demo: --demo-transition;
-    }
-
-    &:has(a[href$="#/crt"]:target-current) {
-      --current-demo: --demo-crt;
-    }
-
-    &:has(a[href$="#/crt-3d"]:target-current) {
-      --current-demo: --demo-crt-3d;
-    }
-
-    &:has(a[href$="#/distortion"]:target-current) {
-      --current-demo: --demo-distortion;
-    }
-
-    &:has(a[href$="#/glass"]:target-current) {
-      --current-demo: --demo-glass;
     }
   }
 
@@ -271,17 +239,10 @@ canvas {
 }
 
 .experiment {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   min-width: 0;
   min-height: 0;
-
-  > section {
-    position: relative;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-  }
+  overflow: hidden;
 }
 
 /* 同じ配置になる見出し行・描画先・前後操作を共有する。 */

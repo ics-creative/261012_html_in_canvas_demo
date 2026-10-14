@@ -71,7 +71,7 @@ export function createPageSheet(material: THREE.MeshSSSNodeMaterial, page: THREE
   mesh.add(edge);
 
   /** 一枚の紙の表と裏に誌面を割り当てる。 */
-  function setTextures(front: THREE.Texture, back = front) {
+  function setTextures(front: THREE.Texture, back: THREE.Texture) {
     print.front = front;
     print.back = back;
   }

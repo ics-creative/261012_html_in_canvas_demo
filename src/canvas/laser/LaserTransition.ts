@@ -28,11 +28,10 @@ export async function createLaserTransition(
     });
   });
   signal.throwIfAborted();
-  const view = stage.addChild(new Container());
   const laser = createLaserScene(light, warmLight);
   const incoming = new Container({ visible: false });
   const picture = incoming.addChild(new Sprite({ anchor: 0.5 }));
-  view.addChild(laser.view, incoming);
+  stage.addChild(laser.view, incoming);
   let current = initial;
   let requested = initial;
   let running = false;
@@ -65,24 +64,7 @@ export async function createLaserTransition(
     if (running || page === current) return;
     running = true;
     incoming.visible = false;
-    const angle = Math.random() * Math.PI * 2;
-    const animation = laser.cut(captures[current], (strength) => {
-      // 2Dの視点を連射全体で3回押し戻し、切断のまとまりに合わせて衝撃をつける。
-      const at = animation.time();
-      animation
-        .to(
-          view,
-          {
-            x: -Math.cos(angle) * strength,
-            y: -Math.sin(angle) * strength,
-            rotation: Math.cos(angle) * strength * 0.0004,
-            duration: 0.04,
-            ease: "power4.out",
-          },
-          at,
-        )
-        .to(view, { x: 0, y: 0, rotation: 0, duration: 0.24, ease: "expo.out" }, at + 0.04);
-    });
+    const animation = laser.cut(captures[current]);
     animation
       .call(() => {
         current = requested;

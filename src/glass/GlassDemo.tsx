@@ -3,7 +3,6 @@ import { useCanvasScene } from "../canvas/useCanvasScene";
 import type { HitCanvas } from "../canvas/HTMLHitTarget";
 import { createGlassScene } from "./GlassScene";
 import { GlassControlsContext } from "./GlassControls";
-import "./glass.css";
 
 // 指定されたJPEG XLを写真一覧へ使う。
 const photos = [
@@ -21,7 +20,7 @@ const photos = [
 const gallery = Array.from({ length: 4 }, () => photos).flat();
 
 /** 同じ写真一覧でCSS blur・HTML in Canvas・SVGの3方式を比較する。 */
-export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg" }) {
+export default function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg" }) {
   const html = method === "html";
   const canvas = useRef<HitCanvas>(null);
   const page = useRef<HTMLElement>(null);
@@ -49,20 +48,18 @@ export function GlassDemo({ method = "html" }: { method?: "css" | "html" | "svg"
   });
 
   return (
-    <main className="experiment">
-      <section ref={host} className={`glass-stage glass-${method}`}>
-        {!html && <Gallery ref={page} />}
-        {method !== "css" && (
-          <canvas ref={canvas} {...(html ? { content: "drawable" } : {})}>
-            {/* 表示と操作の元になる同じHTMLを、端末の解像度で描く。 */}
-            {html && (
-              <div className="glass-document" {...{ drawable: "" }}>
-                <Gallery ref={page} zoom={devicePixelRatio} />
-              </div>
-            )}
-          </canvas>
-        )}
-      </section>
+    <main ref={host} className={`experiment glass-${method}`}>
+      {!html && <Gallery ref={page} />}
+      {method !== "css" && (
+        <canvas ref={canvas} {...(html ? { content: "drawable" } : {})}>
+          {/* 表示と操作の元になる同じHTMLを、端末の解像度で描く。 */}
+          {html && (
+            <div className="glass-document" {...{ drawable: "" }}>
+              <Gallery ref={page} zoom={devicePixelRatio} />
+            </div>
+          )}
+        </canvas>
+      )}
     </main>
   );
 }

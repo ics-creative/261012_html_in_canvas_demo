@@ -6,7 +6,7 @@ import { RetroDesktop } from "./RetroDesktop";
 import "./retro.css";
 
 /** Three.jsのWebGPUだけで、入力できるHTML画面とiMac風の筐体を描く。 */
-export function RetroDemo() {
+export default function RetroDemo() {
   const pixelRatio = devicePixelRatio;
   const canvas = useRef<HitCanvas>(null);
   const [host] = useCanvasScene((element, signal, ready) => {
@@ -17,21 +17,19 @@ export function RetroDemo() {
   });
 
   return (
-    <main className="experiment">
-      <section className="retro-stage">
-        <div ref={host} className="retro-host">
-          {/* 元HTMLを端末の解像度で描き、曲面でも入力と文字の鮮明さを保つ。 */}
-          <canvas ref={canvas} {...{ content: "drawable" }}>
-            <div
-              className="retro-document"
-              style={{ width: 800 * pixelRatio, height: 600 * pixelRatio }}
-              {...{ drawable: "" }}
-            >
-              <RetroDesktop pixelRatio={pixelRatio} />
-            </div>
-          </canvas>
-        </div>
-      </section>
+    <main className="experiment retro-stage">
+      <div ref={host} className="retro-host">
+        {/* 元HTMLを端末の解像度で描き、曲面でも入力と文字の鮮明さを保つ。 */}
+        <canvas ref={canvas} {...{ content: "drawable" }}>
+          <div
+            className="retro-document"
+            style={{ width: 800 * pixelRatio, height: 600 * pixelRatio }}
+            {...{ drawable: "" }}
+          >
+            <RetroDesktop pixelRatio={pixelRatio} />
+          </div>
+        </canvas>
+      </div>
     </main>
   );
 }

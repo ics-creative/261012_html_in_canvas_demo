@@ -1,6 +1,5 @@
 type PaintCanvas = HTMLCanvasElement & {
   requestPaint(): void;
-  updateElementGeometry(element: Element): void;
 };
 type PaintContext = CanvasRenderingContext2D & {
   drawElementImage(source: HTMLElement, x: number, y: number, width: number, height: number): void;
@@ -20,9 +19,8 @@ export function createHTMLCapture(
     // 幅と高さがあるCanvasを転送し、レイアウト変更後の寸法へ合わせる。
     if (!canvas.width || !canvas.height) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
+    // 2D描画の位置と倍率は、drawElementImageが入力・選択領域へ自動で反映する。
     context.drawElementImage(source, 0, 0, canvas.width, canvas.height);
-    // 元HTMLのCSS変形を保って登録し、曲面上でもクリック・選択をブラウザーに任せる。
-    (canvas as PaintCanvas).updateElementGeometry(source);
     onUpdate();
     painted.resolve();
   }

@@ -12,18 +12,11 @@ export async function createRetroScene(
   host: HTMLElement,
   canvas: HitCanvas,
   signal: AbortSignal,
-  ready: Promise<void>,
+  ready: Promise<unknown>,
 ) {
-  // モデルに保存された材質を、WebGPU用の材質として直接読み込む。
-  const loader = new THREE.NodeObjectLoader();
-  Object.assign(loader.nodeMaterials, {
-    MeshBasicMaterial: THREE.MeshBasicNodeMaterial,
-    MeshStandardMaterial: THREE.MeshStandardNodeMaterial,
-    MeshPhysicalMaterial: THREE.MeshPhysicalNodeMaterial,
-  });
   const [renderer, scene] = await Promise.all([
     createRenderer(host, signal, canvas),
-    loadSceneAsset("scenes/retro.json.gz", signal, loader),
+    loadSceneAsset("scenes/crt-3d.json.gz", signal),
   ]);
   signal.throwIfAborted();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);

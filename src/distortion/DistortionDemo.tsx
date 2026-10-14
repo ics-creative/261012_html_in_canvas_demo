@@ -31,16 +31,14 @@ const pages = [
 function TextPage({ index, inert = false }: { index: number; inert?: boolean }) {
   return (
     <section className="distortion-type" inert={inert}>
-      <div className="distortion-copy">
-        <h2>{pages[index].title}</h2>
-        <p>{pages[index].description}</p>
-      </div>
+      <h2>{pages[index].title}</h2>
+      <p>{pages[index].description}</p>
     </section>
   );
 }
 
 /** AV1動画とHTMLの文字を、時間差のある風の歪みで切り替えるデモ。 */
-export function DistortionDemo() {
+export default function DistortionDemo() {
   const stage = useRef<HTMLElement>(null);
   const [current, setCurrent] = useState(0);
   const [scale, setScale] = useState(1);
@@ -67,32 +65,30 @@ export function DistortionDemo() {
   });
 
   return (
-    <main className="experiment">
-      <section ref={stage} className="canvas-stage distortion-stage">
-        <div ref={host} className="distortion-host" />
-        <div
-          className={`distortion-document ${animating ? "is-transitioning" : ""}`}
-          style={{
-            transform: `translate(-50%, -50%) scale(${scale})`,
-          }}
-        >
-          <TextPage index={current} inert={animating} />
+    <main ref={stage} className="experiment distortion-stage">
+      <div ref={host} className="distortion-host" />
+      <div
+        className={`distortion-document ${animating ? "is-transitioning" : ""}`}
+        style={{
+          transform: `translate(-50%, -50%) scale(${scale})`,
+        }}
+      >
+        <TextPage index={current} inert={animating} />
+      </div>
+      <PageNavigation
+        className="distortion-navigation"
+        disabled={() => !scene || animating}
+        onGo={(step) => scene?.go(step)}
+      />
+      {pages.map((page, index) => (
+        <div key={page.video}>
+          {/* 背景はVideoTextureへ渡し、文字のHTMLだけをCanvasへ取り込む。 */}
+          <video src={page.video} muted loop playsInline preload="metadata" hidden />
+          <HTMLTexture width={width} height={height}>
+            <TextPage index={index} />
+          </HTMLTexture>
         </div>
-        <PageNavigation
-          className="distortion-navigation"
-          disabled={() => !scene || animating}
-          onGo={(step) => scene?.go(step)}
-        />
-        {pages.map((page, index) => (
-          <div key={page.video}>
-            {/* 背景はVideoTextureへ渡し、文字のHTMLだけをCanvasへ取り込む。 */}
-            <video src={page.video} muted loop playsInline preload="metadata" hidden />
-            <HTMLTexture width={width} height={height}>
-              <TextPage index={index} />
-            </HTMLTexture>
-          </div>
-        ))}
-      </section>
+      ))}
     </main>
   );
 }

@@ -13,7 +13,8 @@ export function DemoViewport({ children }: { children: ReactNode }) {
   return (
     <div className="demo-viewport" id={requested.startsWith("/glass") ? "/glass" : requested}>
       <GlassControlsContext value={glassControls}>
-        {/* 描画方式を替えてもツールバーを保ち、選択背景の移動を連続させる。 */}
+        {/* ガラスのデモでツールバーを表示し、初回から屈折処理の寸法を測る。
+            描画方式を替えても保ち、選択背景の移動を連続させる。 */}
         {requested.startsWith("/glass") && (
           <GlassControls ref={glassControls} css={requested === "/glass-css"} />
         )}
