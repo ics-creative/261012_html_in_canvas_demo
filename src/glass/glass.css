@@ -163,17 +163,17 @@
     fill: currentColor;
   }
 
-  span {
+  /* 方式名を一行で揃え、アイコンの位置を保つ。 */
+  a > span {
     align-content: center;
     min-height: 24px;
-    text-wrap: balance;
+    white-space: nowrap;
   }
 
   @media (width <= 768px) {
-    --glass-height: 128px;
     width: calc(100% - 16px - var(--scrollbar-size));
 
-    /* 細いセグメントでも、複数行のラベル全体へ暗い背景を敷く。 */
+    /* 細いセグメントに合わせ、選択背景の角を小さくする。 */
     &::after {
       border-radius: 16px;
     }
@@ -181,11 +181,6 @@
     a {
       gap: 0;
       padding-inline: 4px;
-    }
-
-    /* 3行までのラベルを同じ高さへ揃え、アイコンの位置を揃える。 */
-    span {
-      min-height: 64px;
     }
   }
 }

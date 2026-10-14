@@ -36,7 +36,9 @@ export function App() {
   return (
     <>
       <header className="header">
-        <h1>HTML in Canvas</h1>
+        <h1>
+          <span className="canvas-prefix">HTML in </span>Canvas
+        </h1>
         <nav>
           {demos.map(([id, label], index) => (
             <NavLink key={id} to={`/${id}`} style={{ anchorName: `--demo-${id}` }}>

@@ -9,11 +9,9 @@ export const GlassControlsContext = createContext(createRef<HTMLElement>());
 export function GlassControls({ ref, css }: { ref: Ref<HTMLElement>; css: boolean }) {
   return (
     <nav ref={ref} className={`glass-controls${css ? " glass-controls-css" : ""}`}>
-      {/* 塗りつぶしのレイヤー・写真・ペン先で各描画方式を区別する。 */}
+      {/* CSSの公式ロゴと、写真・ペン先のアイコンで描画方式を区別する。 */}
       <NavLink to="/glass-css" style={{ anchorName: "--glass-css" }}>
-        <svg viewBox="0 0 24 24">
-          <path d="M12 2 22 6 12 10 2 6ZM2 10l10 4 10-4v4l-10 4-10-4ZM2 16l10 4 10-4v2l-10 4-10-4Z" />
-        </svg>
+        <img src="images/css.svg" alt="" width="48" height="48" />
         <span>CSS</span>
       </NavLink>
       <NavLink to="/glass" end>
@@ -23,7 +21,9 @@ export function GlassControls({ ref, css }: { ref: Ref<HTMLElement>; css: boolea
             d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM6 8a2 2 0 1 0 4 0 2 2 0 1 0-4 0ZM4 16h16l-4-4-4 2-4-4Z"
           />
         </svg>
-        <span>HTML in Canvas</span>
+        <span>
+          <span className="canvas-prefix">HTML in </span>Canvas
+        </span>
       </NavLink>
       <NavLink to="/glass-svg">
         <svg viewBox="0 0 24 24">
