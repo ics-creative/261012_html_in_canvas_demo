@@ -1,5 +1,6 @@
 import { createContext, createRef, type Ref } from "react";
 import { NavLink } from "react-router";
+import cssLogo from "./css.svg?no-inline";
 import "./glass.css";
 
 /** 共通ツールバーの寸法を、各方式の屈折処理へ渡す。 */
@@ -12,8 +13,8 @@ export function GlassControls({ ref, css }: { ref: Ref<HTMLElement>; css: boolea
       {/* CSSの公式ロゴと、写真・ペン先のアイコンで描画方式を区別する。 */}
       <NavLink to="/glass-css" style={{ anchorName: "--glass-css" }}>
         <svg viewBox="0 0 1000 1000">
-          <use href="images/css.svg#bg" />
-          <use href="images/css.svg#fg" />
+          <use href={`${cssLogo}#bg`} />
+          <use href={`${cssLogo}#fg`} />
         </svg>
         <span>CSS</span>
       </NavLink>
