@@ -8,28 +8,21 @@ import { createClothControls } from "./cloth/ClothControls";
 import { createCanvasTextures } from "./textures";
 import { createRenderer } from "./renderer";
 import { fitOrbit } from "./orbit";
-import { onCleanup, own } from "./lifecycle";
 import { loadSceneAsset } from "./sceneAsset";
 
 /** 平らなHTMLを正面から見せ、無風の導入後に布の物理と風を動かす。 */
-export async function createSurfaceEngine(
-  host: HTMLElement,
-  canvas: HTMLCanvasElement,
-  signal: AbortSignal,
-) {
+export async function createSurfaceEngine(host: HTMLElement, canvas: HTMLCanvasElement) {
   // 48×30の物理格子と192×120の描画格子を分け、毎フレームの計算量を抑える。
-  // 画面の離脱で購読・ループを止めてから、GPUリソースをまとめて解放する。
   const [renderer, scene] = await Promise.all([
-    createRenderer(host, signal),
-    loadSceneAsset("scenes/cloth.json", signal),
+    createRenderer(host),
+    loadSceneAsset("scenes/cloth.json"),
   ]);
-  signal.throwIfAborted();
   renderer.toneMapping = THREE.AgXToneMapping;
   renderer.toneMappingExposure = 1.2;
   renderer.shadowMap.enabled = true;
 
   const camera = scene.getObjectByName("Camera") as THREE.PerspectiveCamera;
-  const environment = own(signal, createEnvironment(renderer, 512));
+  const environment = createEnvironment(renderer, 512);
   scene.environment = environment.texture;
 
   const floor = scene.getObjectByName("Floor");
@@ -37,8 +30,8 @@ export async function createSurfaceEngine(
     throw new Error("布の床がありません。");
   // 床を基準に反射カメラを作り、揺れる布と視点の変化を同じフレームへ映す。
   // 半解像度で描画量を抑え、床の照明・影を残したまま鮮明な鏡像を重ねる。
-  const reflection = own(signal, reflector({ resolutionScale: 0.5, samples: 4 }));
-  const floorMaterial = own(signal, new THREE.MeshStandardNodeMaterial().copy(floor.material));
+  const reflection = reflector({ resolutionScale: 0.5, samples: 4 });
+  const floorMaterial = new THREE.MeshStandardNodeMaterial().copy(floor.material);
   floorMaterial.roughness = 0.08;
   floorMaterial.metalness = 0.8;
   // 床の反射には、実際の布の鏡像を描く。
@@ -48,7 +41,7 @@ export async function createSurfaceEngine(
   floor.add(reflection.target);
 
   // 連続描画はanimation loopに任せ、HTMLのpaint中はテクスチャの更新だけを行う。
-  const { textures, painted } = createCanvasTextures([canvas], renderer, signal);
+  const { textures, painted } = createCanvasTextures([canvas], renderer);
   // 読み込み済みの布・照明・床へ、HTMLと布の物理を接続する。
   const cloth = scene.getObjectByName("Cloth") as THREE.Mesh<
     THREE.PlaneGeometry,
@@ -59,15 +52,14 @@ export async function createSurfaceEngine(
   // フォグは床の遠景に適用し、布の誌面は元のコントラストを保つ。
   cloth.material.fog = false;
   const initialPose = new Float32Array(picking.geometry.getAttribute("position").array);
-  const physics = await createClothSimulation(initialPose, signal);
+  const physics = await createClothSimulation(initialPose);
   const updateGeometry = createClothGeometry(cloth.geometry, picking.geometry);
   updateGeometry(physics.interpolatedPositions);
-  // 布・床・影はシーン素材側で解放し、HTMLテクスチャは画面で所有する。
-  const orbit = createClothControls(camera, renderer.domElement, { physics, picking }, signal);
+  const orbit = createClothControls(camera, renderer.domElement, { physics, picking });
   let lastFrame = 0;
   const wind = { strength: 0 };
   // 風で膨らむ布と床の映り込みに余白を取り、リサイズでも方向とズーム比率を保つ。
-  fitOrbit(renderer, host, camera, orbit, signal, {
+  fitOrbit(renderer, host, camera, orbit, {
     width: 760 * 1.4,
     height: 480 * 1.6,
     zoom: [1, 1.6],
@@ -75,7 +67,6 @@ export async function createSurfaceEngine(
   });
   // HTMLテクスチャの初回描画を待ち、表示交換用の画面を準備する。
   await painted;
-  signal.throwIfAborted();
   renderer.render(scene, camera);
   // 導入の2秒間は平面のまま表示し、その後に風圧を滑らかに立ち上げる。
   const intro = gsap.timeline().to(wind, { strength: 1, duration: 2, ease: "sine.inOut" }, 2);
@@ -85,9 +76,8 @@ export async function createSurfaceEngine(
     () => {
       if (!wind.strength) intro.play(2);
     },
-    { once: true, signal },
+    { once: true },
   );
-  onCleanup(signal, () => intro.kill());
   renderer.setAnimationLoop((now) => {
     const delta = lastFrame ? (now - lastFrame) / 1000 : 0;
     lastFrame = now;

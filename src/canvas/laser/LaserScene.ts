@@ -251,16 +251,10 @@ export function createLaserScene(light: Texture, warmLight: Texture) {
     return timeline;
   }
 
-  function dispose() {
-    timeline.kill();
-    clear();
-    view.destroy({ children: true });
-  }
-
   function resize(nextWidth: number, nextHeight: number) {
     // 進行中のポリゴンを全体で拡縮し、リサイズ後の画面へ合わせる。
     view.scale.set(nextWidth / width, nextHeight / height);
   }
 
-  return { view, cut, resize, dispose };
+  return { view, cut, resize };
 }

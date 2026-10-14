@@ -1,7 +1,7 @@
 import * as THREE from "three/webgpu";
 import gsap from "gsap";
 import { CustomEase } from "gsap/CustomEase";
-import { DragGesture } from "@use-gesture/vanilla";
+import { createGesture, dragAction } from "@use-gesture/vanilla";
 import { pageCount, pageHeight, pageWidth } from "./BookPage";
 import { createHTMLHitTarget, type HitCanvas, type HTMLPoint } from "../canvas/HTMLHitTarget";
 import { createCanvasTextures } from "../canvas/textures";
@@ -9,7 +9,6 @@ import { createPageSheet, createPaperMaterial, sheetHeight, sheetWidth } from ".
 import { createBookWorld } from "./BookWorld";
 import { createOrbit, createPointerRay, fitOrbit } from "../canvas/orbit";
 import { createRenderer } from "../canvas/renderer";
-import { onCleanup, own } from "../canvas/lifecycle";
 import { loadSceneAsset } from "../canvas/sceneAsset";
 
 gsap.registerPlugin(CustomEase);
@@ -20,21 +19,15 @@ const pageTurnEase = CustomEase.create("book-page-turn", "0.24,0,0.12,1");
 export async function createBookScene(
   host: HTMLElement,
   canvas: HitCanvas,
-  signal: AbortSignal,
   ready: Promise<unknown>,
   onChange: (spread: number, turning: boolean) => void,
 ) {
   // シーン素材・紙の繊維・GPUを、並列で読み込む。
   const [renderer, scene, paperGrain] = await Promise.all([
-    createRenderer(host, signal, canvas),
-    loadSceneAsset("images/book/scene.json", signal),
-    loadPaperGrain(),
+    createRenderer(host, canvas),
+    loadSceneAsset("images/book/scene.json"),
+    new THREE.TextureLoader().loadAsync("images/book/paper-grain.png"),
   ]);
-  // 初期化中の離脱では、読み込み済みの素材とGPUをsignalで解放する。
-  signal.throwIfAborted();
-  async function loadPaperGrain() {
-    return own(signal, await new THREE.TextureLoader().loadAsync("images/book/paper-grain.png"));
-  }
 
   // シーン素材は天板・表紙・紙束の静的形状と照明を保存し、角丸も事前に計算する。
   // 低い斜光で紙の湾曲を照らし、めくる紙の影を下の誌面へ落とす。
@@ -43,24 +36,23 @@ export async function createBookScene(
   // 天板の上面を本の底へ合わせ、有限の厚みと丸い端部を見せる。
   // 木目の法線と表紙の布目を強め、マットなウォールナットの質感をつける。
   // 背は紙の綴じ目の下へ納め、表紙に続く本の輪郭をつくる。
-  const { camera, book, stacks } = createBookWorld(renderer, scene, signal);
+  const { camera, book, stacks } = createBookWorld(renderer, scene);
   // フォントと写真の読み込みを待ち、完成したHTMLからHTMLTextureを作る。
   await ready;
-  signal.throwIfAborted();
   // 縮小しても残る繊維の凹凸と漉きむら、布の織り目は静的素材を全誌面で共有する。
   // 凹凸と粗さのグレースケール素材は、読み込んだ数値をそのまま使う。
   paperGrain.wrapS = paperGrain.wrapT = THREE.RepeatWrapping;
   paperGrain.repeat.set(2, 2);
   paperGrain.flipY = false;
   paperGrain.anisotropy = 8;
-  const { textures: pages, painted } = createCanvasTextures([canvas], renderer, signal);
+  const { textures: pages, painted } = createCanvasTextures([canvas], renderer);
   const hitTarget = createHTMLHitTarget(
     canvas,
     pages.map((page) => page.image),
     camera,
     { width: pageWidth, height: pageHeight },
   );
-  const paper = own(signal, createPaperMaterial(paperGrain));
+  const paper = createPaperMaterial(paperGrain);
   const left = createPageSheet(paper, pages[0]);
   const right = createPageSheet(paper, pages[1]);
   const turning = createPageSheet(paper, pages[0]);
@@ -78,7 +70,7 @@ export async function createBookScene(
     onUpdate: poseTurn,
   });
 
-  const orbit = createOrbit(camera, host, signal);
+  const orbit = createOrbit(camera, host);
   orbit.target.set(0, 0.6, 0);
   orbit.rotateSpeed = 0.6;
   orbit.minPolarAngle = 0.06;
@@ -87,68 +79,69 @@ export async function createBookScene(
   orbit.addEventListener("change", hitTarget.hide);
   canvas.tabIndex = 0;
   for (const type of ["pointerdown", "contextmenu"] as const) {
-    host.addEventListener(type, preserveNativeAction, { capture: true, signal });
+    host.addEventListener(type, preserveNativeAction, { capture: true });
   }
-  host.addEventListener("pointermove", pointerMove, { capture: true, signal });
-  host.addEventListener("pointerleave", hitTarget.hide, { signal });
-  host.addEventListener("keydown", keyDown, { signal });
+  host.addEventListener("pointermove", pointerMove, { capture: true });
+  host.addEventListener("pointerleave", hitTarget.hide);
+  host.addEventListener("keydown", keyDown);
   setSpread();
-  fitOrbit(renderer, host, camera, orbit, signal, {
+  fitOrbit(renderer, host, camera, orbit, {
     width: sheetWidth * 2.4 * 1.08,
     height: 8 * 1.08,
     zoom: [0.4, 2],
     position: (distance) => camera.position.set(distance * 0.04, distance * 0.8, distance * 0.6),
   });
-  const gesture = new DragGesture<PointerEvent>(
+  const bindDrag = createGesture([dragAction]);
+  bindDrag(
     host,
-    ({ event, first, last, movement, velocity, direction, tap, canceled }) => {
-      if (first) {
-        grabbed = pageHit(event);
-        orbit.enabled = !grabbed;
-        hitTarget.move(grabbed?.text ?? null, event);
-        if (grabbed) canvas.focus({ preventScroll: true });
-        if (grabbed?.edge) startTurn(grabbed.direction, grabbed.point.z / (sheetHeight * 0.5));
-      }
-      // 紙端だけをめくり操作にし、誌面の選択・画像操作はブラウザーへ渡す。
-      if (grabbed?.edge) {
-        event.preventDefault();
-        const start = Number(grabbed.direction < 0);
-        const progress = THREE.MathUtils.clamp(start + movement[0], 0, 1);
-        host.style.cursor = "grabbing";
-        if (last) {
-          let target = Number(progress > 0.5);
-          if (canceled || event.type !== "pointerup") target = start;
-          else if (tap) target = 1 - start;
-          else if (velocity[0] > 0.0004) target = Number(direction[0] > 0);
-          turnTo(target);
-        } else followDrag(progress, turn.progress);
-      }
-      if (last) {
-        if (grabbed && !grabbed.edge && !tap && !canceled) {
-          hitTarget.finish(pageHit(event)?.text ?? null, event);
+    {
+      onDrag: ({ event, first, last, movement, velocity, direction, tap, canceled }) => {
+        if (!("clientX" in event)) return;
+        if (first) {
+          grabbed = pageHit(event);
+          orbit.enabled = !grabbed;
+          hitTarget.move(grabbed?.text ?? null, event);
+          if (grabbed) canvas.focus({ preventScroll: true });
+          if (grabbed?.edge) startTurn(grabbed.direction, grabbed.point.z / (sheetHeight * 0.5));
         }
-        grabbed = null;
-        orbit.enabled = true;
-        host.style.cursor = "default";
-      }
+        // 紙端だけをめくり操作にし、誌面の選択・画像操作はブラウザーへ渡す。
+        if (grabbed?.edge) {
+          event.preventDefault();
+          const start = Number(grabbed.direction < 0);
+          const progress = THREE.MathUtils.clamp(start + movement[0], 0, 1);
+          host.style.cursor = "grabbing";
+          if (last) {
+            let target = Number(progress > 0.5);
+            if (canceled || event.type !== "pointerup") target = start;
+            else if (tap) target = 1 - start;
+            else if (velocity[0] > 0.0004) target = Number(direction[0] > 0);
+            turnTo(target);
+          } else followDrag(progress, turn.progress);
+        }
+        if (last) {
+          if (grabbed && !grabbed.edge && !tap && !canceled) {
+            hitTarget.finish(pageHit(event)?.text ?? null, event);
+          }
+          grabbed = null;
+          orbit.enabled = true;
+          host.style.cursor = "default";
+        }
+      },
     },
     {
-      pointer: { capture: false, keys: false },
       eventOptions: { capture: true, passive: false },
-      tapsThreshold: 4,
-      transform: ([clientX, clientY]) => {
-        if (aim({ clientX, clientY }).ray.intersectPlane(dragPlane, dragPoint)) {
-          book.worldToLocal(dragPoint);
-        }
-        return [-dragPoint.x / (sheetWidth * 2), 0];
+      drag: {
+        pointer: { capture: false, keys: false },
+        tapsThreshold: 4,
+        transform: ([clientX, clientY]) => {
+          if (aim({ clientX, clientY }).ray.intersectPlane(dragPlane, dragPoint)) {
+            book.worldToLocal(dragPoint);
+          }
+          return [-dragPoint.x / (sheetWidth * 2), 0];
+        },
       },
     },
   );
-  onCleanup(signal, () => {
-    gsap.killTweensOf(turn);
-    gesture.destroy();
-    for (const resource of [left, right, turning]) resource.dispose();
-  });
 
   function setSpread(leftSpread = spread, rightSpread = spread) {
     [left, right].forEach((sheet, side) => {
@@ -255,9 +248,8 @@ export async function createBookScene(
     } else if (event.key === "Escape") hitTarget.clear();
   }
 
-  // HTML誌面を描いたフレームを用意してから、共通の画面遷移へ渡す。
+  // HTML誌面を描いたフレームを用意してから、Loadingを閉じる。
   await painted;
-  signal.throwIfAborted();
   // めくる紙も同じシェーダーを使うため、初回は表示中の見開きだけを描く。
   renderer.render(scene, camera);
   renderer.setAnimationLoop(() => {

@@ -2,7 +2,6 @@ import * as THREE from "three/webgpu";
 import gsap from "gsap";
 import { createRenderer } from "../canvas/renderer";
 import { observeSize } from "../canvas/resize";
-import { own, onCleanup } from "../canvas/lifecycle";
 import { createCanvasTextures } from "../canvas/textures";
 import { createPageCapture } from "./pageCapture";
 
@@ -15,23 +14,22 @@ const ROWS = 16;
 export async function createTiledTransition(
   container: HTMLElement,
   canvases: HTMLCanvasElement[],
-  signal: AbortSignal,
   initial: number,
   onStart: () => void,
   onComplete: (page: number) => void,
 ) {
-  const renderer = await createRenderer(container, signal);
+  const renderer = await createRenderer(container);
   const layout = createPageCapture(canvases);
   // GPU画像は初期化時の寸法で確保されるため、元HTMLを先に表示領域へ揃える。
   layout.resize(container.clientWidth, container.clientHeight);
-  const capture = createCanvasTextures(canvases, renderer, signal, paint);
+  const capture = createCanvasTextures(canvases, renderer, paint);
   const textures = capture.textures;
   const scene = new THREE.Scene();
   const view = new THREE.Group();
   scene.add(view);
   const camera = new THREE.PerspectiveCamera(40, 1, 1, 6000);
   const viewport = new THREE.Vector2();
-  const material = own(signal, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+  const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
   const tiles: Array<{ mesh: THREE.Mesh<THREE.PlaneGeometry>; distance: number }> = [];
   let timeline: gsap.core.Timeline | null = null;
   let current = initial;
@@ -132,16 +130,11 @@ export async function createTiledTransition(
     capture.refresh();
   }
 
-  /** アニメーションと描画用リソースを解放する。 */
-  onCleanup(signal, () => {
-    timeline?.kill();
-    cancelAnimationFrame(paintFrame);
-  });
   material.map = textures[current];
 
   for (let column = 0; column < COLUMNS; column++) {
     for (let row = 0; row < ROWS; row++) {
-      const geometry = own(signal, new THREE.PlaneGeometry(WIDTH / COLUMNS, HEIGHT / ROWS));
+      const geometry = new THREE.PlaneGeometry(WIDTH / COLUMNS, HEIGHT / ROWS);
       const uv = geometry.getAttribute("uv");
       // 各タイルへ、HTML全体の対応する矩形を割り当てる。
       for (let vertex = 0; vertex < uv.count; vertex++) {
@@ -157,9 +150,8 @@ export async function createTiledTransition(
       view.add(mesh);
     }
   }
-  observeSize(container, resize, signal);
+  observeSize(container, resize);
   // 元HTMLの初回paintを待ち、転送済みのテクスチャで遷移を始める。
   await capture.painted;
-  signal.throwIfAborted();
   return { transitionTo, scrollTo };
 }

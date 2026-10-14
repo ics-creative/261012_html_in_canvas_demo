@@ -9,12 +9,9 @@ import "./retro.css";
 export default function RetroDemo() {
   const pixelRatio = devicePixelRatio;
   const canvas = useRef<HitCanvas>(null);
-  const [host] = useCanvasScene((element, signal, ready) => {
-    if (!canvas.current) {
-      throw new Error("CRTの描画要素が配置されていません。");
-    }
-    return createRetroScene(element, canvas.current, signal, ready);
-  });
+  const [host] = useCanvasScene((element, ready) =>
+    createRetroScene(element, canvas.current!, ready),
+  );
 
   return (
     <main className="experiment retro-stage">

@@ -4,7 +4,6 @@ import { RectAreaLightTexturesLib } from "three/addons/lights/RectAreaLightTextu
 import { ao } from "three/addons/tsl/display/GTAONode.js";
 import { denoise } from "three/addons/tsl/display/DenoiseNode.js";
 import { createEnvironment } from "../canvas/environment";
-import { own } from "../canvas/lifecycle";
 
 // 面光源のBRDF表を、WebGPUのライティングノードへ一度だけ登録する。
 THREE.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
@@ -14,12 +13,11 @@ export function createRetroWorld(
   renderer: THREE.Renderer,
   scene: THREE.Scene,
   camera: THREE.PerspectiveCamera,
-  signal: AbortSignal,
 ) {
   // フォグを通した床の暗さへ背景色を合わせ、遠景をつなぐ。
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
-  scene.environment = own(signal, createEnvironment(renderer, 256)).texture;
+  scene.environment = createEnvironment(renderer, 256).texture;
   // 後傾した前面と丸い下腹を持つ、無彩色のiMac G3風CRT筐体を素材から読む。
   // 前面全体を後傾させ、入力の投影座標も画面とベゼルの傾きへ合わせる。
   // 背面へ向かって断面を楕円へ丸め、筐体の下腹にふくらみを残す。
@@ -51,21 +49,21 @@ export function createRetroWorld(
   key.shadow.needsUpdate = true;
 
   // 半解像度のGTAOを平滑化し、間接光の遮蔽として適用する。
-  const normals = own(signal, TSL.pass(scene, camera, { samples: 0 }).setResolutionScale(0.5));
+  const normals = TSL.pass(scene, camera, { samples: 0 }).setResolutionScale(0.5);
   // 法線の前処理には専用の軽い材質を使い、形状の情報を描く。
-  normals.overrideMaterial = own(signal, new THREE.MeshBasicNodeMaterial());
+  normals.overrideMaterial = new THREE.MeshBasicNodeMaterial();
   normals.setMRT(TSL.mrt({ output: TSL.normalView }));
   normals.contextNode = TSL.builtinAOContext(TSL.float(1));
   const normal = normals.getTextureNode();
   const depth = normals.getTextureNode("depth");
-  const occlusion = own(signal, ao(depth, normal, camera));
+  const occlusion = ao(depth, normal, camera);
   occlusion.resolutionScale = 0.5;
   occlusion.radius.value = 0.4;
   occlusion.thickness.value = 0.2;
   occlusion.samples.value = 12;
-  const filtered = own(signal, denoise(occlusion.getTextureNode(), depth, normal, camera));
+  const filtered = denoise(occlusion.getTextureNode(), depth, normal, camera);
   filtered.radius.value = 8;
-  const indirect = own(signal, TSL.convertToTexture(filtered));
+  const indirect = TSL.convertToTexture(filtered);
   // 陰影の中間画像だけを参照し、最終描画は通常のRendererへ渡す。
   renderer.contextNode = TSL.builtinAOContext(indirect.sample(TSL.screenUV).r);
   return () => renderer.render(scene, camera);

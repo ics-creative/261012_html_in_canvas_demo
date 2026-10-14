@@ -2,7 +2,6 @@ import * as THREE from "three/webgpu";
 import gsap from "gsap";
 import { createRenderer } from "../canvas/renderer";
 import { observeSize } from "../canvas/resize";
-import { own, onCleanup } from "../canvas/lifecycle";
 import { createCanvasTextures } from "../canvas/textures";
 import { createBackgroundNode, createFlowField, createForegroundMaterial } from "./materials";
 
@@ -19,31 +18,28 @@ export async function createDistortionScene(
   host: HTMLElement,
   canvases: HTMLCanvasElement[],
   videos: HTMLVideoElement[],
-  signal: AbortSignal,
   onScale: (scale: number) => void,
   onStart: () => void,
   onComplete: (page: number) => void,
 ) {
-  const renderer = await createRenderer(host, signal);
-  // 表示中と遷移先の動画を再生し、画面を離れると全動画を停止する。
-  onCleanup(signal, () => videos.forEach((video) => video.pause()));
+  const renderer = await createRenderer(host);
+  // 表示中と遷移先の動画を、背景テクスチャへ渡す。
   const backgrounds = videos.map((video) => {
-    const texture = own(signal, new THREE.VideoTexture(video));
+    const texture = new THREE.VideoTexture(video);
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
   });
   // 最初の動画のデコードを待ち、Loadingから描画済みの背景へ切り替える。
   await videos[0].play();
-  signal.throwIfAborted();
   backgrounds[0].needsUpdate = true;
-  const { textures, painted } = createCanvasTextures(canvases, renderer, signal);
+  const { textures, painted } = createCanvasTextures(canvases, renderer);
   const camera = new THREE.PerspectiveCamera(40, 1, 1, 20000);
   // 入力を別動画から初期化し、切り替え元と先のUniformを分離する。
   const background = createBackgroundNode(backgrounds[0], backgrounds[1]);
   const scene = new THREE.Scene();
-  scene.backgroundNode = own(signal, background.color);
-  const geometry = own(signal, new THREE.PlaneGeometry(width, height, 160, 96));
-  const flow = own(signal, createFlowField());
+  scene.backgroundNode = background.color;
+  const geometry = new THREE.PlaneGeometry(width, height, 160, 96);
+  const flow = createFlowField();
   // 退場・入場の二枚を使い回し、演出の完了後に次の操作を受け付ける。
   const sheets = Array.from({ length: 2 }, createSheet);
   const [outgoing, incoming] = sheets;
@@ -57,8 +53,6 @@ export async function createDistortionScene(
 
   function createSheet() {
     const surface = createForegroundMaterial(textures[0], height, flow);
-    // 描画先と、標準ぼかしが持つ中間バッファを解放する。
-    for (const resource of [surface.material, surface.source, surface.blur]) own(signal, resource);
     const mesh = new THREE.Mesh(geometry, surface.material);
     mesh.frustumCulled = false;
     scene.add(mesh);
@@ -90,15 +84,8 @@ export async function createDistortionScene(
     // 静止文字を先に描いてからHTMLを隠し、両ボタンを同じフレームで無効にする。
     renderer.render(scene, camera);
     onStart();
-    try {
-      // 遷移先の最初のフレームを待ってから、背景と文字の演出を始める。
-      await videos[next].play();
-      signal.throwIfAborted();
-    } catch (error) {
-      // 画面離脱で中断された再生は、その画面の解放処理へ合流する。
-      if (!signal.aborted) throw error;
-      return;
-    }
+    // 遷移先の最初のフレームを待ってから、背景と文字の演出を始める。
+    await videos[next].play();
     current = next;
     backgrounds[current].needsUpdate = true;
     prepareSheet(incoming, current, false);
@@ -167,10 +154,8 @@ export async function createDistortionScene(
     }
   }
 
-  /** アニメーションと描画用リソースを解放する。 */
-  onCleanup(signal, () => timeline.kill());
   // 文字とぼかしのパイプラインを初期化時に作り、最初の操作へ備える。
-  observeSize(host, resize, signal);
+  observeSize(host, resize);
   renderer.render(scene, camera);
   for (const sheet of sheets) sheet.mesh.visible = false;
   renderer.setAnimationLoop(render);

@@ -1,5 +1,4 @@
 import { lazy } from "react";
-import { NavLink, Navigate, Route, useLocation } from "react-router";
 import { DemoViewport } from "./DemoViewport";
 import "./app.css";
 import "./scrollbar.css";
@@ -13,49 +12,49 @@ const DistortionDemo = lazy(() => import("../distortion/DistortionDemo"));
 const BookDemo = lazy(() => import("../book/BookDemo"));
 const GlassDemo = lazy(() => import("../glass/GlassDemo"));
 
+// 文書を読み込んだ時点のデモを選び、誌面内のURLだけを更新する。
+const requested = location.hash.split("/")[1] || "transition";
+const method = requested === "glass-css" ? "css" : requested === "glass-svg" ? "svg" : "html";
+
 // メニューの並び順から連番を付け、表示位置と番号を揃える。
 const demos = [
-  ["transition", "Transitions"],
-  ["laser", "Laser"],
-  ["cloth", "Cloth"],
-  ["book", "Book"],
-  ["crt", "CRT"],
-  ["distortion", "Distortion"],
-  ["crt-3d", "CRT 3D"],
-  ["glass", "Glass"],
-];
+  ["transition", "Transitions", <TransitionDemo />],
+  ["laser", "Laser", <TransitionDemo effect="laser" />],
+  ["cloth", "Cloth", <CanvasStage />],
+  ["book", "Book", <BookDemo />],
+  ["crt", "CRT", <CRTDemo />],
+  ["distortion", "Distortion", <DistortionDemo />],
+  ["crt-3d", "CRT 3D", <RetroDemo />],
+  ["glass", "Glass", <GlassDemo method={method} />],
+] as const;
+const current =
+  demos.find(([id]) => id === (requested.startsWith("glass") ? "glass" : requested)) || demos[0];
+const route = current[0] === "glass" ? requested : current[0];
+const currentPath = route === "transition" || route === "laser" ? `${route}/01` : route;
 
-/** デモごとのURLと共通ナビゲーションを定義する。 */
+/** 文書ごとのデモと共通ナビゲーションを描く。 */
 export function App() {
-  const { pathname } = useLocation();
-  const demo = pathname.startsWith("/glass") ? "glass" : pathname.split("/")[1];
-
   return (
     <>
       <header className="header">
         <h1>HTML in Canvas</h1>
-        <nav style={{ positionAnchor: `--demo-${demo}` }}>
-          {demos.map(([id, label], index) => (
-            <NavLink key={id} to={`/${id}`} style={{ anchorName: `--demo-${id}` }}>
-              <span>{String(index + 1).padStart(2, "0")}</span> {label}
-            </NavLink>
-          ))}
+        <nav style={{ positionAnchor: `--demo-${current[0]}` }}>
+          {demos.map(([id, label], index) => {
+            const page = id === "transition" || id === "laser" ? `${id}/01` : id;
+            return (
+              <a
+                key={id}
+                href={id === current[0] ? `#/${currentPath}` : `?demo=${id}#/${page}`}
+                style={{ anchorName: `--demo-${id}` }}
+              >
+                <span>{String(index + 1).padStart(2, "0")}</span> {label}
+              </a>
+            );
+          })}
         </nav>
       </header>
-      <DemoViewport>
-        <Route path="/transition/:page?" element={<TransitionDemo />} />
-        <Route path="/laser/:page?" element={<TransitionDemo effect="laser" />} />
-        <Route path="/cloth" element={<CanvasStage />} />
-        <Route path="/book" element={<BookDemo />} />
-        <Route path="/crt" element={<CRTDemo />} />
-        <Route path="/distortion" element={<DistortionDemo />} />
-        <Route path="/crt-3d" element={<RetroDemo />} />
-        <Route path="/glass" element={<GlassDemo />} />
-        <Route path="/glass-css" element={<GlassDemo method="css" />} />
-        <Route path="/glass-svg" element={<GlassDemo method="svg" />} />
-        {/* 初期表示を01のTransitionsへ揃える。 */}
-        <Route path="*" element={<Navigate to="/transition/01" replace />} />
-      </DemoViewport>
+      {/* 初期表示を01のTransitionsへ揃え、誌面内のページはHashRouterで進める。 */}
+      <DemoViewport route={currentPath}>{current[2]}</DemoViewport>
     </>
   );
 }

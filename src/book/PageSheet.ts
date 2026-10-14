@@ -116,12 +116,5 @@ export function createPageSheet(material: THREE.MeshSSSNodeMaterial, page: THREE
     edgeGeometry.boundingSphere = geometry.boundingSphere;
   }
 
-  /** 紙の形状と輪郭を解放する。紙のマテリアルは全誌面の所有者が解放する。 */
-  function dispose() {
-    for (const resource of [geometry, edgeGeometry, edgeMaterial]) {
-      resource.dispose();
-    }
-  }
-
-  return { mesh, setTextures, pose, dispose };
+  return { mesh, setTextures, pose };
 }

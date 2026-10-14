@@ -1,11 +1,9 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 
 /** ReactとESNextを使用するVite設定。 */
 export default defineConfig({
   // GitHub Pagesの公開フォルダーでも、生成物を相対パスで読み込む。
   base: "./",
-  plugins: [react()],
   resolve: {
     // 公式のES Modulesを分割し、CoreとTSLを各デモで共有する。
     alias: [

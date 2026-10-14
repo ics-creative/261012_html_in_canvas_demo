@@ -9,10 +9,9 @@ import "./canvas.css";
 export default function CanvasStage() {
   const canvas = useRef<HTMLCanvasElement>(null);
 
-  const [host] = useCanvasScene(async (element, signal, ready) => {
+  const [host] = useCanvasScene(async (element, ready) => {
     await ready;
-    signal.throwIfAborted();
-    return createSurfaceEngine(element, canvas.current!, signal);
+    return createSurfaceEngine(element, canvas.current!);
   });
 
   return (

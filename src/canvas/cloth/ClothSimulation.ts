@@ -1,23 +1,13 @@
-import { releaseProxy, transfer, wrap } from "comlink";
+import { transfer, wrap } from "comlink";
 import { CLOTH_COLUMNS, type ClothPoint } from "./ClothPhysics";
 import type { createClothWorker } from "./ClothWorker";
-import { onCleanup } from "../lifecycle";
 
 /** 格子の密度と物理を保ち、距離制約の計算を描画スレッドから分離する。 */
-export async function createClothSimulation(initialPose: Float32Array, signal: AbortSignal) {
+export async function createClothSimulation(initialPose: Float32Array) {
   const worker = new Worker(new URL("./ClothWorker.ts", import.meta.url), { type: "module" });
   const factory = wrap<typeof createClothWorker>(worker);
   const pose = initialPose.slice();
   const physics = await factory(transfer(pose, [pose.buffer]));
-  onCleanup(signal, () => {
-    // ドラッグの終了通知を先に送り、その後に通信とワーカーを解放する。
-    queueMicrotask(() => {
-      physics[releaseProxy]();
-      factory[releaseProxy]();
-      worker.terminate();
-    });
-  });
-  signal.throwIfAborted();
   let elapsed = 0;
   let pending = false;
   let updated = false;

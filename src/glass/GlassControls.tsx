@@ -1,24 +1,33 @@
 import { createContext, createRef, type Ref } from "react";
-import { NavLink } from "react-router";
 import cssLogo from "./css.svg?no-inline";
 import "./glass.css";
 
 /** 共通ツールバーの寸法を、各方式の屈折処理へ渡す。 */
 export const GlassControlsContext = createContext(createRef<HTMLElement>());
 
-/** 3方式の切り替え中も同じツールバーを保ち、選択背景を横へ動かす。 */
-export function GlassControls({ ref, css }: { ref: Ref<HTMLElement>; css: boolean }) {
+/** 描画方式の文書へ移動するツールバーを配置する。 */
+export function GlassControls({ ref, route }: { ref: Ref<HTMLElement>; route: string }) {
   return (
-    <nav ref={ref} className={`glass-controls${css ? " glass-controls-css" : ""}`}>
+    <nav
+      ref={ref}
+      className={`glass-controls${route === "glass-css" ? " glass-controls-css" : ""}`}
+    >
       {/* CSSの公式ロゴと、写真・ペン先のアイコンで描画方式を区別する。 */}
-      <NavLink to="/glass-css" style={{ anchorName: "--glass-css" }}>
+      <a
+        href={route === "glass-css" ? "#/glass-css" : "?demo=glass-css#/glass-css"}
+        className={route === "glass-css" ? "active" : undefined}
+        style={{ anchorName: "--glass-css" }}
+      >
         <svg viewBox="0 0 1000 1000">
           <use href={`${cssLogo}#bg`} />
           <use href={`${cssLogo}#fg`} />
         </svg>
         <span>CSS</span>
-      </NavLink>
-      <NavLink to="/glass" end>
+      </a>
+      <a
+        href={route === "glass" ? "#/glass" : "?demo=glass#/glass"}
+        className={route === "glass" ? "active" : undefined}
+      >
         <svg viewBox="0 0 24 24">
           <path
             fillRule="evenodd"
@@ -28,8 +37,11 @@ export function GlassControls({ ref, css }: { ref: Ref<HTMLElement>; css: boolea
         <span>
           <span className="canvas-prefix">HTML in </span>Canvas
         </span>
-      </NavLink>
-      <NavLink to="/glass-svg">
+      </a>
+      <a
+        href={route === "glass-svg" ? "#/glass-svg" : "?demo=glass-svg#/glass-svg"}
+        className={route === "glass-svg" ? "active" : undefined}
+      >
         <svg viewBox="0 0 24 24">
           <path
             fillRule="evenodd"
@@ -37,7 +49,7 @@ export function GlassControls({ ref, css }: { ref: Ref<HTMLElement>; css: boolea
           />
         </svg>
         <span>SVG</span>
-      </NavLink>
+      </a>
     </nav>
   );
 }

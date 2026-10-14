@@ -2,7 +2,6 @@ import * as THREE from "three/webgpu";
 import { createRenderer } from "../canvas/renderer";
 import { createOrbit, createPointerRay, fitOrbit } from "../canvas/orbit";
 import { createHTMLHitTarget, type HitCanvas, type HTMLPoint } from "../canvas/HTMLHitTarget";
-import { onCleanup } from "../canvas/lifecycle";
 import { createCanvasTextures } from "../canvas/textures";
 import { createRetroWorld } from "./RetroWorld";
 import { loadSceneAsset } from "../canvas/sceneAsset";
@@ -11,31 +10,28 @@ import { loadSceneAsset } from "../canvas/sceneAsset";
 export async function createRetroScene(
   host: HTMLElement,
   canvas: HitCanvas,
-  signal: AbortSignal,
   ready: Promise<unknown>,
 ) {
   const [renderer, scene] = await Promise.all([
-    createRenderer(host, signal, canvas),
-    loadSceneAsset("scenes/crt-3d.json.gz", signal),
+    createRenderer(host, canvas),
+    loadSceneAsset("scenes/crt-3d.json.gz"),
   ]);
-  signal.throwIfAborted();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-  const renderWorld = createRetroWorld(renderer, scene, camera, signal);
+  const renderWorld = createRetroWorld(renderer, scene, camera);
   await ready;
-  signal.throwIfAborted();
   // 描画と入力を同じCanvasにまとめ、元HTMLのpaintをThree.jsで直接受け取る。
-  const { textures, painted } = createCanvasTextures([canvas], renderer, signal);
+  const { textures, painted } = createCanvasTextures([canvas], renderer);
   const screen = scene.getObjectByName("screen");
   if (!(screen instanceof THREE.Mesh) || !(screen.material instanceof THREE.MeshBasicNodeMaterial))
     throw new Error("CRTの画面がありません。");
   // CRTらしさは、画面ガラスの曲率で表現する。
   screen.material.map = textures[0];
-  const orbit = createOrbit(camera, host, signal);
+  const orbit = createOrbit(camera, host);
   orbit.target.set(0, 2.4, -0.4);
   orbit.maxPolarAngle = Math.PI * 0.48;
   orbit.minPolarAngle = 0.2;
   orbit.mouseButtons.RIGHT = undefined;
-  fitOrbit(renderer, host, camera, orbit, signal, {
+  fitOrbit(renderer, host, camera, orbit, {
     width: 8,
     height: 8,
     zoom: [0.4, 2],
@@ -45,7 +41,6 @@ export async function createRetroScene(
   const source = textures[0].image;
   const size = { width: source.clientWidth, height: source.clientHeight };
   const target = createHTMLHitTarget(canvas, [source], camera, size);
-  onCleanup(signal, target.hide);
   const aim = createPointerRay(camera, canvas);
   const press = new THREE.Vector2();
   orbit.addEventListener("change", target.hide);
@@ -71,7 +66,7 @@ export async function createRetroScene(
       target.move(point, event);
       host.style.cursor = point ? "auto" : "grab";
     },
-    { capture: true, signal },
+    { capture: true },
   );
   for (const type of ["pointerdown", "contextmenu"] as const) {
     host.addEventListener(
@@ -84,7 +79,7 @@ export async function createRetroScene(
         // 右クリックは、ブラウザーの標準メニューを開く。
         if (point || type === "contextmenu") event.stopImmediatePropagation();
       },
-      { capture: true, signal },
+      { capture: true },
     );
   }
   host.addEventListener(
@@ -95,9 +90,9 @@ export async function createRetroScene(
         target.finish(hit(event), event);
       }
     },
-    { capture: true, signal },
+    { capture: true },
   );
-  host.addEventListener("pointerleave", target.hide, { signal });
+  host.addEventListener("pointerleave", target.hide);
 
   function render() {
     orbit.update();
@@ -105,7 +100,6 @@ export async function createRetroScene(
   }
   // サイズと曲面の入力領域を揃え、最初のHTML paint後に描画を開始する。
   await painted;
-  signal.throwIfAborted();
   render();
   renderer.setAnimationLoop(render);
 }

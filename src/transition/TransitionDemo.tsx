@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useCanvasScene } from "../canvas/useCanvasScene";
-import { Navigate, useParams } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { HTMLTexture } from "../canvas/HTMLTexture";
 import { TransitionPage } from "./TransitionPage";
 import { pages, laserPages } from "./pages";
@@ -26,18 +26,16 @@ function TransitionViewport({
   const [displayed, setDisplayed] = useState(page);
   const [animating, setAnimating] = useState(false);
 
-  const [host, engine] = useCanvasScene(async (element, signal, ready) => {
+  const [host, engine] = useCanvasScene(async (element, ready) => {
     // レーザーではPixiJS、タイルではThree.jsだけを読み込む。
     const createTransition =
       effect === "laser"
         ? (await import("../canvas/laser/LaserTransition")).createLaserTransition
         : (await import("./TiledTransition")).createTiledTransition;
     await ready;
-    signal.throwIfAborted();
     const instance = await createTransition(
       element,
       Array.from(stage.current!.querySelectorAll<HTMLCanvasElement>(".capture-staging canvas")),
-      signal,
       page,
       () => setAnimating(true),
       (index) => {
@@ -54,7 +52,6 @@ function TransitionViewport({
         }
       },
     );
-    signal.throwIfAborted();
     // 初期化中にスクロールした場合も、最初の演出へ現在の表示位置を渡す。
     instance.scrollTo(page, document.current!.scrollTop);
     return instance;
@@ -91,10 +88,10 @@ function TransitionViewport({
 
 /** URLに対応したHTMLページをレーザーまたはタイルで切り替える。 */
 export default function TransitionDemo({ effect = "tiles" }: { effect?: Effect }) {
-  const { page: id } = useParams();
+  const id = useLocation().pathname.split("/")[2];
   const catalog = effect === "laser" ? laserPages : pages;
   const page = catalog.findIndex((item) => item.id === id);
   const basePath = effect === "laser" ? "/laser" : "/transition";
   if (page < 0) return <Navigate to={`${basePath}/01`} replace />;
-  return <TransitionViewport key={effect} page={page} effect={effect} basePath={basePath} />;
+  return <TransitionViewport page={page} effect={effect} basePath={basePath} />;
 }

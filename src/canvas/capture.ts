@@ -6,11 +6,7 @@ type PaintContext = CanvasRenderingContext2D & {
 };
 
 /** フォントの準備後に購読し、HTMLとテクスチャを同じpaint内で更新する。 */
-export function createHTMLCapture(
-  canvas: HTMLCanvasElement,
-  onUpdate: () => void,
-  signal: AbortSignal,
-) {
+export function createHTMLCapture(canvas: HTMLCanvasElement, onUpdate: () => void) {
   const painted = Promise.withResolvers<void>();
   const source = canvas.firstElementChild as HTMLElement;
   const context = canvas.getContext("2d") as PaintContext;
@@ -32,9 +28,7 @@ export function createHTMLCapture(
     (canvas as PaintCanvas).requestPaint();
   }
 
-  canvas.addEventListener("paint", paint, { signal });
-  // 起動中の画面離脱でも待機を終え、呼び出し元の初期化を完了させる。
-  signal.addEventListener("abort", () => painted.resolve(), { once: true });
+  canvas.addEventListener("paint", paint);
   refresh();
   return { refresh, painted: painted.promise };
 }

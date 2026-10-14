@@ -10,10 +10,9 @@ export default function CRTDemo() {
   const effects = useRef<HTMLInputElement>(null);
   const [received, setReceived] = useState(false);
 
-  const [output] = useCanvasScene(async (host, signal, ready) => {
+  const [output] = useCanvasScene(async (host, ready) => {
     await ready;
-    signal.throwIfAborted();
-    return createCRTDisplay(host, inputCanvas.current!, form.current!, effects.current!, signal);
+    return createCRTDisplay(host, inputCanvas.current!, form.current!, effects.current!);
   });
 
   return (

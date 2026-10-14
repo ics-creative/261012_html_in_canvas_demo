@@ -1,11 +1,10 @@
-import { Container, Filter, Sprite, Texture } from "pixi.js";
+import { RenderTexture, Sprite, Texture } from "pixi.js";
 import gsap from "gsap";
 
 import { CRTFilter } from "pixi-filters/crt";
 import { GlitchFilter } from "pixi-filters/glitch";
 import { AdvancedBloomFilter } from "pixi-filters/advanced-bloom";
 import { createPixi, pixiTexture } from "../canvas/pixi";
-import { onCleanup } from "../canvas/lifecycle";
 import { observeSize } from "../canvas/resize";
 
 /** フォントとPixiJSの準備後、HTMLフォームへCRTとグリッチを重ねる。 */
@@ -14,9 +13,8 @@ export async function createCRTDisplay(
   canvas: HTMLCanvasElement,
   form: HTMLFormElement,
   effects: HTMLInputElement,
-  signal: AbortSignal,
 ) {
-  const { renderer, stage, render } = await createPixi(host, signal);
+  const { renderer, stage } = await createPixi(host);
   const started = gsap.ticker.time;
   // 走査線とノイズは控え、中央の入力欄を保ちながら縁の暗さを戻す。
   const crt = new CRTFilter({
@@ -45,11 +43,12 @@ export async function createCRTDisplay(
     blur: 4,
   });
   const filters = [glitch, bloom, crt];
-  const cached = stage.addChild(new Container());
-  const sprite = cached.addChild(new Sprite());
+  const cache = RenderTexture.create({ resolution: devicePixelRatio, dynamic: true });
+  const cached = stage.addChild(new Sprite({ texture: cache }));
+  const sprite = new Sprite();
   // 発光はHTML・強度・ON/OFFが変わるときだけ計算する。
   sprite.filters = [bloom];
-  cached.cacheAsTexture({ resolution: devicePixelRatio, antialias: false });
+  let cacheDirty = true;
   stage.filters = [glitch, crt];
   stage.filterArea = renderer.screen;
   for (const filter of filters) {
@@ -68,12 +67,12 @@ export async function createCRTDisplay(
   function toggleEffects() {
     for (const filter of filters) filter.enabled = effects.checked;
     // 発光を含むキャッシュを更新し、OFF時は元のフォームを表示する。
-    cached.updateCacheTexture();
+    cacheDirty = true;
   }
 
   // フォームの初期状態を、フィルターのON/OFFへ反映する。
   toggleEffects();
-  effects.addEventListener("change", toggleEffects, { signal });
+  effects.addEventListener("change", toggleEffects);
 
   function refreshGlitch() {
     // 入力欄の文字とキャレットを、実際のフォームのクリック位置に保つ。
@@ -108,29 +107,39 @@ export async function createCRTDisplay(
     refreshGlitch();
   }
 
-  const capture = pixiTexture(canvas, signal, () => {
+  const capture = pixiTexture(canvas, () => {
     // 同じCanvasを更新するので、TextureとSpriteは初期化時のものを使い続ける。
     sprite.setSize(renderer.screen.width, renderer.screen.height);
-    cached.updateCacheTexture();
+    cache.resize(renderer.screen.width, renderer.screen.height, devicePixelRatio);
+    cached.setSize(renderer.screen.width, renderer.screen.height);
+    cacheDirty = true;
     // 最初のフォームも描画し終えてから、Canvasを表示して準備完了を知らせる。
     render();
     renderer.canvas.style.visibility = "visible";
     gsap.ticker.add(tick);
   });
   sprite.texture = capture.texture;
-  observeSize(
-    host,
-    () => {
-      // Canvasのリサイズは画像を消すため、HTMLのpaintが済むまでGPU描画を止める。
-      gsap.ticker.remove(tick);
-      resize();
-      capture.refresh();
-    },
-    signal,
-  );
+  observeSize(host, () => {
+    // Canvasのリサイズは画像を消すため、HTMLのpaintが済むまでGPU描画を止める。
+    gsap.ticker.remove(tick);
+    resize();
+    capture.refresh();
+  });
 
   function pulse() {
     burstEnd = Math.max(burstEnd, time + 0.16);
+  }
+
+  function render() {
+    if (cacheDirty) {
+      renderer.render({ container: sprite, target: cache, clear: true });
+      cacheDirty = false;
+    }
+    renderer.render(stage);
+    // paintと毎フレームの描画後に中間画像を外し、リサイズ時のプール更新へ備える。
+    crt.groups[0].setResource(Texture.EMPTY.source, 1);
+    crt.groups[0].setResource(Texture.EMPTY.source.style, 2);
+    bloom.resources.uMapTexture = Texture.EMPTY.source;
   }
 
   function tick(now: number) {
@@ -166,26 +175,13 @@ export async function createCRTDisplay(
     const glow = 0.32 + strength * 0.16;
     if (bloom.bloomScale !== glow) {
       bloom.bloomScale = glow;
-      cached.updateCacheTexture();
+      cacheDirty = true;
     }
     render();
-    // フィルターが借りた画像の参照を描画後に外し、プールの寿命へ合わせる。
-    crt.groups[0].setResource(Texture.EMPTY.source, 1);
-    crt.groups[0].setResource(Texture.EMPTY.source.style, 2);
-    bloom.resources.uMapTexture = Texture.EMPTY.source;
   }
 
-  form.addEventListener("input", pulse, { signal });
-  form.addEventListener("submit", pulse, { signal });
-  onCleanup(signal, () => {
-    gsap.ticker.remove(tick);
-    // 全filterが借りるgroupを、描画基盤の入力画像・uniformより先に解放する。
-    crt.groups[0].destroy();
-    // GlitchFilterのテクスチャより先に、親クラスのシェーダーを破棄する。
-    Filter.prototype.destroy.call(glitch);
-    for (const filter of filters) filter.destroy();
-  });
+  form.addEventListener("input", pulse);
+  form.addEventListener("submit", pulse);
   // フォームを描画してから、画面を切り替える準備完了を知らせる。
   await capture.painted;
-  signal.throwIfAborted();
 }

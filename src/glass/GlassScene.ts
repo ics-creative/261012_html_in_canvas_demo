@@ -4,7 +4,6 @@ import { gaussianBlur } from "three/addons/tsl/display/GaussianBlurNode.js";
 import { createRenderer } from "../canvas/renderer";
 import { createCanvasTextures } from "../canvas/textures";
 import { observeSize } from "../canvas/resize";
-import { own, onCleanup } from "../canvas/lifecycle";
 import type { HitCanvas } from "../canvas/HTMLHitTarget";
 import { createSVGTextures } from "./SVGTexture";
 
@@ -14,10 +13,9 @@ export async function createGlassScene(
   canvas: HitCanvas,
   page: HTMLElement,
   controls: HTMLElement,
-  signal: AbortSignal,
   svg: boolean,
 ) {
-  const renderer = await createRenderer(host, signal, canvas);
+  const renderer = await createRenderer(host, canvas);
   const source = svg ? page : canvas.querySelector<HTMLElement>("[drawable]");
   if (!source) throw new Error("ガラスの描画元がありません。");
   if (svg) renderer.setClearColor(0, 0);
@@ -46,8 +44,8 @@ export async function createGlassScene(
   // HTMLの寸法を確定してから、端末の解像度で初回の画像を転送する。
   resize();
   const { textures, painted, refresh } = svg
-    ? await createSVGTextures(page, signal, requestRender)
-    : createCanvasTextures([canvas], renderer, signal, requestRender);
+    ? await createSVGTextures(page, requestRender)
+    : createCanvasTextures([canvas], renderer, requestRender);
   const textureSize = viewport.value.clone();
 
   // CSSと同じカプセルの距離場を使い、形状と屈折の境界を揃える。
@@ -72,17 +70,14 @@ export async function createGlassScene(
   const cropPosition = position.sub(padding);
   // QuadMeshとぼかしは上端原点。HTML画像の参照時にY座標を一度だけ変換する。
   const cropUV = uv().mul(cropSize).add(cropPosition).div(viewport).flipY();
-  const cropped = own(
-    signal,
-    rtt(
-      texture(textures[0], cropUV),
-      (size.value.x + padding * 2) * devicePixelRatio,
-      (size.value.y + padding * 2) * devicePixelRatio,
-      { depthBuffer: false },
-    ),
+  const cropped = rtt(
+    texture(textures[0], cropUV),
+    (size.value.x + padding * 2) * devicePixelRatio,
+    (size.value.y + padding * 2) * devicePixelRatio,
+    { depthBuffer: false },
   );
   // 標準のガウスぼかしを使い、輪郭を滑らかにする。
-  const blur = own(signal, gaussianBlur(cropped, devicePixelRatio, 4));
+  const blur = gaussianBlur(cropped, devicePixelRatio, 4);
   const refracted = screenUV.mul(viewport).sub(offset);
   const sharp = texture(textures[0], refracted.div(viewport).flipY());
   // ぼかしのRenderTargetは上端を原点として、画面と同じY方向で参照する。
@@ -90,16 +85,13 @@ export async function createGlassScene(
   // 中央にも写真の輪郭を残し、縁へ向かって屈折像を鮮明につなぐ。
   const glass = mix(soft, sharp, edge.mul(0.6).add(0.4));
   const mask = distance.negate().smoothstep(0, 1);
-  const material = own(
-    signal,
-    new THREE.MeshBasicNodeMaterial({
-      colorNode: mix(background.rgb, glass.rgb, mask),
-      // SVG版の一覧は通常のDOMで表示し、GPUではガラス部分だけを重ねる。
-      opacityNode: svg ? mask : null,
-      transparent: svg,
-      toneMapped: false,
-    }),
-  );
+  const material = new THREE.MeshBasicNodeMaterial({
+    colorNode: mix(background.rgb, glass.rgb, mask),
+    // SVG版の一覧は通常のDOMで表示し、GPUではガラス部分だけを重ねる。
+    opacityNode: svg ? mask : null,
+    transparent: svg,
+    toneMapped: false,
+  });
   // 全画面のQuadMesh一枚で、背景とガラスを合成する。
   const quad = new THREE.QuadMesh(material);
 
@@ -115,32 +107,23 @@ export async function createGlassScene(
   }
 
   // paint後にCanvasの寸法を再代入すると画像が消えるため、サイズ監視を先に始める。
-  observeSize(
-    host,
-    () => {
-      resize();
-      // Three.jsがHTMLテクスチャを登録してから、Canvasの操作領域を更新する。
-      if (svg) refresh();
-      else canvas.updateElementGeometry(source);
-      cropped.setSize(
-        (size.value.x + padding * 2) * devicePixelRatio,
-        (size.value.y + padding * 2) * devicePixelRatio,
-      );
-      // サイズ変更時だけ画像を確保し直し、転送は次のpaintへ任せる。
-      if (!svg && !textureSize.equals(viewport.value)) {
-        textures[0].dispose();
-        renderer.initTexture(textures[0]);
-        textureSize.copy(viewport.value);
-      }
-    },
-    signal,
-  );
-  onCleanup(signal, () => {
-    cancelAnimationFrame(frame);
-    if (!svg) canvas.clearElementGeometry(source);
+  observeSize(host, () => {
+    resize();
+    // Three.jsがHTMLテクスチャを登録してから、Canvasの操作領域を更新する。
+    if (svg) refresh();
+    else canvas.updateElementGeometry(source);
+    cropped.setSize(
+      (size.value.x + padding * 2) * devicePixelRatio,
+      (size.value.y + padding * 2) * devicePixelRatio,
+    );
+    // サイズ変更時だけ画像を確保し直し、転送は次のpaintへ任せる。
+    if (!svg && !textureSize.equals(viewport.value)) {
+      textures[0].dispose();
+      renderer.initTexture(textures[0]);
+      textureSize.copy(viewport.value);
+    }
   });
   // 初回のHTML paintと転送を完了してから、表示の準備完了を通知する。
   await painted;
-  signal.throwIfAborted();
   requestRender();
 }

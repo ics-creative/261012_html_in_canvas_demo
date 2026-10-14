@@ -10,8 +10,8 @@ import "./book.css";
 export default function BookDemo() {
   const canvasRef = useRef<HitCanvas>(null);
   const [navigation, setNavigation] = useState({ spread: 0, turning: false });
-  const [host, scene] = useCanvasScene((element, signal, ready) =>
-    createBookScene(element, canvasRef.current!, signal, ready, (spread, turning) =>
+  const [host, scene] = useCanvasScene((element, ready) =>
+    createBookScene(element, canvasRef.current!, ready, (spread, turning) =>
       setNavigation({ spread, turning }),
     ),
   );

@@ -1,26 +1,20 @@
 import { HTMLTexture, SRGBColorSpace, type Renderer } from "three/webgpu";
-import { own, onCleanup } from "./lifecycle";
 
 /** 読み込み済みの元HTMLを直接GPUへ渡し、同じCanvas内の誌面をpaintと同期する。 */
 export function createCanvasTextures(
   canvases: HTMLCanvasElement[],
   renderer: Renderer,
-  signal: AbortSignal,
   render = () => {},
 ) {
   const canvas = renderer.domElement as HTMLCanvasElement & { requestPaint(): void };
   canvas.setAttribute("content", "drawable");
-  const sources = canvases.flatMap((owner) =>
-    Array.from(owner.querySelectorAll<HTMLElement>(":scope > [drawable]"), (source) => ({
-      source,
-      owner,
-    })),
+  const sources = canvases.flatMap((source) =>
+    Array.from(source.querySelectorAll<HTMLElement>(":scope > [drawable]")),
   );
-  // 再初期化でも同じHTMLを使えるよう、移動した元要素を終了時に戻す。
-  onCleanup(signal, () => sources.forEach(({ source, owner }) => owner.append(source)));
-  const textures = sources.map(({ source }) => {
+  // 元HTMLを描画先へ置き、入力領域とテクスチャの座標系を揃える。
+  const textures = sources.map((source) => {
     canvas.append(source);
-    const texture = own(signal, new HTMLTexture(source));
+    const texture = new HTMLTexture(source);
     texture.colorSpace = SRGBColorSpace;
     texture.anisotropy = 8;
     // 元HTMLの解像度を保ち、mipmapで斜めに縮小される文字のちらつきを抑える。
@@ -35,15 +29,13 @@ export function createCanvasTextures(
   canvas.addEventListener(
     "paint",
     () => {
-      // 再利用したHTMLの変更通知が空でも、初回に保留された画像転送を再開する。
+      // 初回に保留されたHTML画像の転送を、最初のpaintで再開する。
       for (const texture of textures) texture.needsUpdate = true;
       painted.resolve();
     },
-    { once: true, signal },
+    { once: true },
   );
-  // 起動中の離脱でも初期化の待機を終える。
-  onCleanup(signal, painted.resolve);
   // 以後の誌面更新はThree.jsの共有onpaintに任せ、移動先のCanvasで描画を再開する。
-  canvas.addEventListener("paint", render, { signal });
+  canvas.addEventListener("paint", render);
   return { textures, painted: painted.promise, refresh: () => canvas.requestPaint() };
 }

@@ -1,7 +1,6 @@
 import { Container, Sprite, Texture } from "pixi.js";
 import { HTMLSource } from "pixi.js/html-source";
 import { createPixi } from "../pixi";
-import { onCleanup } from "../lifecycle";
 import { observeSize } from "../resize";
 import { createLaserScene } from "./LaserScene";
 import { createLightTexture } from "./lightTexture";
@@ -11,23 +10,15 @@ import { createPageCapture } from "../../transition/pageCapture";
 export async function createLaserTransition(
   container: HTMLElement,
   canvases: HTMLCanvasElement[],
-  signal: AbortSignal,
   initial: number,
   onStart: () => void,
   onComplete: (page: number) => void,
 ) {
-  const { renderer, stage, render } = await createPixi(container, signal);
+  const { renderer, stage, render } = await createPixi(container);
   const [light, warmLight] = await Promise.all([
     createLightTexture("blue"),
     createLightTexture("orange"),
   ]);
-  onCleanup(signal, () => {
-    queueMicrotask(() => {
-      light.destroy(true);
-      warmLight.destroy(true);
-    });
-  });
-  signal.throwIfAborted();
   const laser = createLaserScene(light, warmLight);
   const incoming = new Container({ visible: false });
   const picture = incoming.addChild(new Sprite({ anchor: 0.5 }));
@@ -41,23 +32,13 @@ export async function createLaserTransition(
   const captures = canvases.map((owner) => {
     const source = owner.firstElementChild as HTMLElement;
     renderer.canvas.append(source);
-    const texture = new Texture({ source: new HTMLSource({ resource: source }), dynamic: true });
-    onCleanup(signal, () => {
-      owner.append(source);
-      queueMicrotask(() => texture.destroy(true));
-    });
-    return texture;
+    return new Texture({ source: new HTMLSource({ resource: source }), dynamic: true });
   });
   const painted = Promise.withResolvers<void>();
-  renderer.canvas.addEventListener(
-    "paint",
-    () => {
-      render();
-      painted.resolve();
-    },
-    { signal },
-  );
-  onCleanup(signal, painted.resolve);
+  renderer.canvas.addEventListener("paint", () => {
+    render();
+    painted.resolve();
+  });
 
   function transitionTo(page: number) {
     requested = page;
@@ -106,8 +87,7 @@ export async function createLaserTransition(
     captures[page].source.requestPaint();
   }
 
-  observeSize(container, resize, signal);
-  onCleanup(signal, laser.dispose);
+  observeSize(container, resize);
   await painted.promise;
   return { transitionTo, scrollTo };
 }

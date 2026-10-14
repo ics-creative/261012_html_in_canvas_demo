@@ -44,14 +44,12 @@ export default function DistortionDemo() {
   const [scale, setScale] = useState(1);
   const [animating, setAnimating] = useState(false);
 
-  const [host, scene] = useCanvasScene(async (element, signal, ready) => {
+  const [host, scene] = useCanvasScene(async (element, ready) => {
     await ready;
-    signal.throwIfAborted();
     return createDistortionScene(
       element,
       Array.from(stage.current!.querySelectorAll<HTMLCanvasElement>(".capture-staging canvas")),
       Array.from(stage.current!.querySelectorAll("video")),
-      signal,
       setScale,
       () => flushSync(() => setAnimating(true)),
       (index) => {

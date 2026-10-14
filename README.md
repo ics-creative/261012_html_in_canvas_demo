@@ -31,7 +31,7 @@ HTML in CanvasとWebGPUを使うChrome Beta向けです。[http://localhost:5180
 | 08   | [Glass](http://localhost:5180/#/glass)               | アイコン付きセグメントで「CSS」「HTML in Canvas」「SVG」の3方式を切り替え、ぼかしと屈折を比較。                                          | CSS・Three.js |
 | 08-b | [Glass SVG](http://localhost:5180/#/glass-svg)       | 同じ写真一覧をSVGの`foreignObject`経由で画像化し、ガラスの背面へ使う。ツールバー内のリンクからHTML in Canvas版と切り替え。               | Three.js      |
 
-URLはReact Routerの`HashRouter`で管理します。共通ヘッダーの下全体が描画領域で、UIは英語表記です。
+共通メニューとGlassの方式切り替えは通常の`a`リンクで文書を読み込みます。TransitionsとLaserの誌面内だけをReact Routerの`HashRouter`で管理します。共通ヘッダーの下全体が描画領域で、UIは英語表記です。
 
 TransitionsとLaserは縦スクロールに対応し、現在見えている範囲から遷移を開始します。見出しの表示にはCSSの`timeline-trigger`・`animation-trigger`と`sibling-index()`による時間差を使います。
 
@@ -39,7 +39,7 @@ Distortionの背景動画は[`public/videos/`](public/videos/)のAV1 MP4（1920�
 
 Glassは32件の写真を縦にスクロールできます。「CSS」は通常のDOMと`backdrop-filter`だけで表示します。「HTML in Canvas」と「SVG」はガラス部分だけを端末の解像度で処理し、ガウスぼかしと縁の屈折を合成します。元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
 
-3方式で白い半透明のツールバーを共有し、HTML in Canvas・SVG版は白い下地を濃くして文字の視認性を高めます。黒い半透明の選択背景はCSSのアンカーポジショニングと共通のスプリング曲線で横へ移動します。HTML in Canvas・SVG版は表面の傾きと屈折率から背景の輪郭をレンズ状に曲げます。CSSの公式ロゴも含めてアイコンと文字は黒、選択中はiOSの高コントラスト用ブルー（`#5CB8FF`）で表示します。幅768px以下では、ツールバーの「HTML in Canvas」を「Canvas」に短縮します。
+3方式で白い半透明のツールバーを共有し、HTML in Canvas・SVG版は白い下地を濃くして文字の視認性を高めます。黒い半透明の選択背景はCSSのアンカーポジショニングで、選択中の方式に合わせて配置します。HTML in Canvas・SVG版は表面の傾きと屈折率から背景の輪郭をレンズ状に曲げます。CSSの公式ロゴも含めてアイコンと文字は黒、選択中はiOSの高コントラスト用ブルー（`#5CB8FF`）で表示します。幅768px以下では、ツールバーの「HTML in Canvas」を「Canvas」に短縮します。
 
 Glass SVGは[modern-screenshot](https://github.com/qq15725/modern-screenshot)で、HTML・CSS・JPEG XLを`foreignObject`入りのSVG画像へ埋め込みます。ガラスの屈折処理と写真一覧は既存版と共有し、スクロール・サイズ変更時に背面画像を更新します。SVG画像自体は操作できないため、一覧の表示と操作は通常のDOMに残し、ガラスだけを透明なCanvasで重ねています。
 
@@ -53,9 +53,9 @@ Vite、React 19.3、TypeScript 7、React Routerを使用しています。描画
 | `npm run lint`   | oxlintで検査。設定は[.oxlintrc.json](.oxlintrc.json)。 |
 | `npm run format` | oxfmtで整形。設定は[.oxfmtrc.json](.oxfmtrc.json)。    |
 
-Three.jsは`HTMLTexture`、LaserはPixiJSの`HTMLSource`で元HTMLを取り込みます。CRTは`requestPaint()`と`drawElementImage()`でフォームをテクスチャへ反映します。CRT 3DはThree.jsのみで描画します。
+Three.jsは`HTMLTexture`、LaserはPixiJSの`HTMLSource`で元HTMLを取り込みます。CRTは`requestPaint()`と`drawElementImage()`でフォームをテクスチャへ反映し、`pixi-filters`の`CRTFilter`・`GlitchFilter`・`AdvancedBloomFilter`を適用します。発光の計算結果はPixiJSの`RenderTexture`へ保存します。CRT 3DはThree.jsのみで描画します。
 
-リンクを押すとURLと現在地を即座に切り替えます。`lazy`・`Suspense`でコードを読み込み、フォント・写真・HTMLの初回paint・GPU描画の準備中は共通のLoadingを表示します。各ページは離脱時に破棄し、再訪問時に初期化します。画面を離れる際のイベント解除とGPUリソースの解放は`AbortSignal`にまとめています。
+デモ間のリンクは文書を読み直し、ブラウザーに文書とGPUの資源管理を任せます。`lazy`・`Suspense`でコードを読み込み、フォント・写真・HTMLの初回paint・GPU描画の準備中は共通のLoadingを表示します。
 
 CRT 3Dは、[モデル](public/scenes/crt-3d.json.gz)を読み込み、HTMLフォームをモニターの画面に表示します。
 筐体の形状・照明・材質はモデルに保存しています。
@@ -65,7 +65,7 @@ CRT 3Dは、[モデル](public/scenes/crt-3d.json.gz)を読み込み、HTMLフ�
 | パス                                 | 内容                                                                                                   |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------ |
 | [`src/app/`](src/app/)               | ルーティング、共通ヘッダー、表示切り替え、スクロールバー。                                             |
-| [`src/canvas/`](src/canvas/)         | HTML取り込み、描画の初期化・破棄、ヒット領域、視点操作。`cloth/`に布の物理、`laser/`にレーザーの描画。 |
+| [`src/canvas/`](src/canvas/)         | HTML取り込み、描画の初期化、ヒット領域、視点操作。`cloth/`に布の物理、`laser/`にレーザーの描画。 |
 | [`src/transition/`](src/transition/) | タイル遷移、誌面、見出しのスクロールアニメーション。Laserとページ切り替えの枠組みを共有。              |
 | [`src/distortion/`](src/distortion/) | 動画背景・HTML文字の変形とぼかし。                                                                     |
 | [`src/book/`](src/book/)             | 本のHTML誌面、紙の変形、シーン。                                                                       |
@@ -73,11 +73,6 @@ CRT 3Dは、[モデル](public/scenes/crt-3d.json.gz)を読み込み、HTMLフ�
 | [`src/glass/`](src/glass/)           | 写真一覧とガラスの屈折。                                                                               |
 | [`src/poster/`](src/poster/)         | 布に描く元HTML。                                                                                       |
 | [`public/`](public/)                 | 写真、紙・木材のテクスチャ、静的シーン。                                                               |
-| [`patches/`](patches/)               | PixiJSへの修正。                                                                                       |
-
-### PixiJSのパッチ
-
-PixiJS 8.22.0のWebGPUバッチやフィルターに残るテクスチャ参照を解放するため、[pixi.js+8.22.0.patch](patches/pixi.js+8.22.0.patch)を適用しています。`npm install`時に`postinstall`の`patch-package`が自動実行されます。PixiJSを更新する際は、上流での修正状況を確認してパッチを見直します。
 
 ## 素材・参考
 

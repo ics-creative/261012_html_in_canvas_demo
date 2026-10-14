@@ -25,24 +25,15 @@ export default function GlassDemo({ method = "html" }: { method?: "css" | "html"
   const canvas = useRef<HitCanvas>(null);
   const page = useRef<HTMLElement>(null);
   const controls = useContext(GlassControlsContext);
-  const [host] = useCanvasScene(async (element, signal, ready) => {
+  const [host] = useCanvasScene(async (element, ready) => {
     await ready;
-    // 切り替えUIを先に描き、続くアイドル時間にSVGの背面画像を準備する。
-    if (method === "svg") {
-      await new Promise<IdleDeadline>((resolve) => requestIdleCallback(resolve));
-    }
-    signal.throwIfAborted();
     // CSS版は通常のDOMとbackdrop-filterで描く。
     if (method === "css") return;
-    if (!canvas.current || !page.current || !controls.current) {
-      throw new Error("ガラスの描画要素がありません。");
-    }
     return createGlassScene(
       element,
-      canvas.current,
-      page.current,
-      controls.current,
-      signal,
+      canvas.current!,
+      page.current!,
+      controls.current!,
       method === "svg",
     );
   });
