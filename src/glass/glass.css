@@ -66,6 +66,7 @@
 
 .glass-controls {
   --glass-height: 96px;
+  --glass-gutter: 32px;
   /* iOSの高コントラスト用の青を、黒い選択背景へ重ねる。 */
   --glass-selected: #5cb8ff;
   --selected-glass: 1;
@@ -73,13 +74,13 @@
   z-index: 2;
   isolation: isolate;
   anchor-scope: all;
-  /* 常時表示するスクロールバーを除いた、本文の幅へ合わせる。 */
-  inset: 48px var(--scrollbar-size) auto 0;
+  /* 写真と同じ左右余白を取り、スクロールバーの手前へ収める。 */
+  inset: 48px calc(var(--scrollbar-size) + var(--glass-gutter)) auto var(--glass-gutter);
   margin-inline: auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 4px;
-  width: min(768px, calc(100% - 32px - var(--scrollbar-size)));
+  max-width: 768px;
   height: var(--glass-height);
   padding: 2px;
   overflow: clip;
@@ -100,7 +101,7 @@
     visibility: hidden;
   }
 
-  /* 等幅リンクの形へ背景を揃え、GPU描画の初期化中も横移動を合成する。 */
+  /* 等幅リンクへカプセル形の背景を重ね、GPUの準備中も横移動を合成する。 */
   &::after {
     content: "";
     position: absolute;
@@ -171,16 +172,14 @@
   }
 
   @media (width <= 768px) {
-    width: calc(100% - 16px - var(--scrollbar-size));
+    --glass-height: 88px;
+    --glass-gutter: 16px;
 
-    /* 細いセグメントに合わせ、選択背景の角を小さくする。 */
-    &::after {
-      border-radius: 16px;
-    }
-
+    /* 48pxのアイコンを保ち、文字と間隔を狭いセグメントへ合わせる。 */
     a {
       gap: 0;
       padding-inline: 4px;
+      font-size: 16px;
     }
   }
 }
