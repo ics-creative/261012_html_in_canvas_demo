@@ -175,6 +175,11 @@
     --glass-height: 88px;
     --glass-gutter: 16px;
 
+    /* モバイルでは、ガラスの切り替えボタンの方式名を「Canvas」に縮める。 */
+    .canvas-prefix {
+      display: none;
+    }
+
     /* 48pxのアイコンを保ち、文字と間隔を狭いセグメントへ合わせる。 */
     a {
       gap: 0;

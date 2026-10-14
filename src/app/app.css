@@ -103,13 +103,6 @@ canvas {
   height: 100dvh;
 }
 
-/* モバイルは「Canvas」の表記で揃え、方式名の折り返しを抑える。 */
-.canvas-prefix {
-  @media (width <= 768px) {
-    display: none;
-  }
-}
-
 .header {
   z-index: 2;
   /* Gridの幅へ収め、リンク列だけを横スクロールする。 */
