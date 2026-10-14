@@ -71,7 +71,7 @@ export async function createCRTDisplay(
     cached.updateCacheTexture();
   }
 
-  // DOMのチェック状態を使い、Activityから戻ったときにもON/OFFを引き継ぐ。
+  // フォームの初期状態を、フィルターのON/OFFへ反映する。
   toggleEffects();
   effects.addEventListener("change", toggleEffects, { signal });
 

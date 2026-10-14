@@ -11,7 +11,7 @@ import {
 /** 最初の描画を終えた画面を、共通の表示切り替えへ知らせる。 */
 export const SceneReadyContext = createContext(() => {});
 
-/** フォント・写真・GPUの準備をActionで待ち、非表示時は描画を止める。 */
+/** フォント・写真・GPUの準備をActionで待ち、ページ離脱時に資源を解放する。 */
 export function useCanvasScene<T>(
   create: (host: HTMLDivElement, signal: AbortSignal, ready: Promise<void>) => Promise<T>,
 ) {
@@ -49,10 +49,7 @@ export function useCanvasScene<T>(
         if (!signal.aborted) console.error(error);
       }
     });
-    return () => {
-      controller.abort();
-      setScene(undefined);
-    };
+    return () => controller.abort();
   }, []);
   return [host, initializing ? undefined : scene] as const;
 }
