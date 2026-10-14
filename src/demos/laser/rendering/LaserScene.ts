@@ -1,0 +1,260 @@
+import * as PIXI from "pixi.js";
+import gsap from "gsap";
+import { Physics2DPlugin } from "gsap/Physics2DPlugin";
+import { splitPolygon, type Vertex } from "./splitPolygon";
+
+gsap.registerPlugin(Physics2DPlugin);
+
+const SHOT_COUNT = 48;
+const MAX_PIECES = 512;
+// 火花の数を抑え、レーザー線と断片の輪郭を見せる。
+const MAX_SPARKS = 128;
+const IMPACTS: Partial<Record<number, number>> = { 1: 16, 16: 20, 40: 24 };
+type Piece = { vertices: Vertex[]; mesh: PIXI.Graphics; texture: PIXI.Texture; target: Vertex };
+
+/** 標準Graphicsと発光SpriteでHTMLを切断し、全断片が消えるまでの演出を作る。 */
+export function createLaserScene(light: PIXI.Texture, warmLight: PIXI.Texture) {
+  const view = new PIXI.Container();
+  const paper = view.addChild(new PIXI.Container());
+  const lights = view.addChild(new PIXI.Container());
+  // 通常合成の芯を最後にまとめ、合成モードごとの描画順を揃える。
+  const sparkCores = view.addChild(new PIXI.RenderLayer());
+  const timeline = gsap.timeline({ paused: true });
+  let pieces: Piece[] = [];
+  let width = 0;
+  let height = 0;
+  let impactAngle = 0;
+
+  function createGlow(
+    texture: PIXI.Texture,
+    length: number,
+    thickness: number,
+    anchor = 0.5,
+    spark = false,
+  ) {
+    const glow = new PIXI.Container();
+    // 芯の太さと光彩を分け、細い線でも白い輝点と色の残光を保つ。
+    const halo = new PIXI.Sprite({
+      texture,
+      anchor: { x: anchor, y: 0.5 },
+      tint: texture === warmLight ? 0xff8030 : 0x607cff,
+      blendMode: "add",
+    });
+    const core = new PIXI.Sprite({
+      texture: PIXI.Texture.WHITE,
+      anchor: { x: anchor, y: 0.5 },
+      // 白い誌面でも火花の芯を残し、光彩だけを加算する。
+      tint: spark ? (texture === warmLight ? 0xff8030 : 0x607cff) : 0xffffff,
+      blendMode: spark ? "normal" : "add",
+    });
+    halo.setSize(length + thickness * 8, thickness * 12);
+    core.setSize(length, thickness);
+    glow.addChild(halo, core);
+    // 親の移動と明るさは保ち、破棄時のレイヤー解除はPixiJSへ任せる。
+    if (spark) sparkCores.attach(core);
+    return glow;
+  }
+
+  function createPiece(vertices: Vertex[], texture: PIXI.Texture): Piece {
+    // 三角形分割とUV生成はPixiJSへ任せ、元HTMLの原点と寸法だけ指定する。
+    const matrix = new PIXI.Matrix().scale(width / texture.width, height / texture.height);
+    matrix.translate(-width / 2, -height / 2);
+    const mesh = paper.addChild(new PIXI.Graphics());
+    mesh.setFillStyle({ texture, matrix, textureSpace: "global" }).poly(vertices).fill();
+    return { vertices, mesh, texture, target: { x: 0, y: 0 } };
+  }
+
+  function removePiece({ mesh }: Piece) {
+    gsap.killTweensOf(mesh.position);
+    mesh.destroy();
+  }
+
+  function clear() {
+    for (const piece of pieces) removePiece(piece);
+    pieces = [];
+    for (const child of lights.removeChildren()) child.destroy({ children: true });
+  }
+
+  function emitSparks(start: Vertex, end: Vertex, direction: Vertex, at: number) {
+    const length = Math.hypot(end.x - start.x, end.y - start.y);
+    const count = Math.min(4, Math.ceil(length / 48));
+    for (let index = 0; index < count; index++) {
+      if (sparkCores.renderLayerChildren.length >= MAX_SPARKS) return;
+      const distance = Math.random();
+      const streak = Math.random() < 0.4;
+      const speed = streak ? 480 + Math.random() * 480 : 160 + Math.random() * 320;
+      const drift = (Math.random() - 0.5) * speed * 0.2;
+      // ビームの進行方向を基準に、細い火花を流す。
+      const angle = Math.atan2(direction.y, direction.x) + Math.atan2(drift, speed);
+      const x = start.x + (end.x - start.x) * distance;
+      const y = start.y + (end.y - start.y) * distance;
+      const life = 0.8 + Math.random() * 0.24;
+      // 芯と光彩を線より小さくし、白地と暗い断面の両方で火花を見せる。
+      const spark = createGlow(
+        Math.random() < 0.24 ? warmLight : light,
+        streak ? speed * 0.008 : 2,
+        0.8,
+        1,
+        true,
+      );
+      spark.alpha = 0.4;
+      spark.position.set(x, y);
+      spark.rotation = angle;
+      lights.addChild(spark);
+      // 向きを保って減速し、細い残光の間に短い微粒子を残す。
+      // 空気抵抗による減速はGSAPの物理プラグインへ任せる。
+      timeline
+        .to(
+          spark,
+          {
+            physics2D: {
+              velocity: Math.hypot(speed, drift),
+              angle: (angle * 180) / Math.PI,
+              friction: 0.16,
+            },
+            duration: life,
+          },
+          at,
+        )
+        // 減速中も芯の太さを保ち、最後のフェードまで微粒子を見せる。
+        .to(spark.scale, { x: streak ? 0.4 : 1, duration: life, ease: "expo.out" }, at)
+        // 減速して残る時間を見せ、明るさは後半に落とす。
+        .to(spark, { alpha: 0, duration: life, ease: "power2.in" }, at)
+        .call(() => spark.destroy({ children: true }), [], at + life);
+    }
+  }
+
+  function slice(start: Vertex, end: Vertex, at: number) {
+    const length = Math.hypot(end.x - start.x, end.y - start.y);
+    const direction = { x: (end.x - start.x) / length, y: (end.y - start.y) / length };
+    const nx = -direction.y;
+    const ny = direction.x;
+    let count = pieces.length;
+    pieces = pieces.flatMap((piece) => {
+      const { mesh } = piece;
+      if (count >= MAX_PIECES) return [piece];
+      // 移動した断片の座標へ切断線を戻す。頂点のUVは元のHTMLに対応したまま。
+      const halves = splitPolygon(
+        piece.vertices,
+        { x: start.x - mesh.x, y: start.y - mesh.y },
+        { x: end.x - mesh.x, y: end.y - mesh.y },
+      );
+      if (!halves) return [piece];
+      count++;
+      const seam = halves[0].filter(
+        ({ x, y }) => Math.abs((x + mesh.x - start.x) * nx + (y + mesh.y - start.y) * ny) < 0.002,
+      );
+      emitSparks(
+        { x: seam[0].x + mesh.x, y: seam[0].y + mesh.y },
+        { x: seam[seam.length - 1].x + mesh.x, y: seam[seam.length - 1].y + mesh.y },
+        direction,
+        at,
+      );
+      const force = pieces.length < 8 ? 80 + Math.random() * 40 : 20 + Math.random() * 20;
+      const fragments = halves.map((vertices, side) => {
+        const fragment = createPiece(vertices, piece.texture);
+        const distance = side === 0 ? force : -force;
+        fragment.mesh.position.copyFrom(mesh.position);
+        fragment.target = { x: piece.target.x + nx * distance, y: piece.target.y + ny * distance };
+        timeline.to(
+          fragment.mesh.position,
+          {
+            ...fragment.target,
+            duration: 0.4,
+            ease: "expo.out",
+          },
+          at,
+        );
+        return fragment;
+      });
+      removePiece(piece);
+      return fragments;
+    });
+  }
+
+  function fire(index: number, time: number) {
+    const angle = Math.random() * Math.PI * 2;
+    const reach = Math.hypot(width, height);
+    const dx = Math.cos(angle) * reach;
+    const dy = Math.sin(angle) * reach;
+    const x = (Math.random() - 0.5) * width * 0.8;
+    const y = (Math.random() - 0.5) * height * 0.8;
+    const start = { x: x - dx, y: y - dy };
+    const end = { x: x + dx, y: y + dy };
+    const line = new PIXI.Container({ x: start.x, y: start.y, rotation: angle, visible: false });
+    const texture = Math.random() < 0.16 ? warmLight : light;
+    const beam = createGlow(texture, reach * 2, 2, 0);
+    const head = createGlow(texture, 4, 2);
+    beam.scale.x = 0;
+    line.addChild(beam, head);
+    lights.addChild(line);
+    timeline
+      .set(line, { visible: true }, time)
+      .to(beam.scale, { x: 1, duration: 0.08, ease: "none" }, time)
+      .to(head, { x: reach * 2, duration: 0.08, ease: "none" }, time)
+      .to(head, { alpha: 0, duration: 0.08 }, time + 0.08)
+      .to(beam, { alpha: 0, duration: 0.24, ease: "power2.out" }, time + 0.08)
+      .call(
+        () => {
+          slice(start, end, time + 0.08);
+          // 48発の連射で視点を3回押し戻し、切断のまとまりに合わせて衝撃をつける。
+          const strength = IMPACTS[index + 1];
+          if (strength) {
+            const at = timeline.time();
+            timeline
+              .to(
+                view,
+                {
+                  x: -Math.cos(impactAngle) * strength,
+                  y: -Math.sin(impactAngle) * strength,
+                  rotation: Math.cos(impactAngle) * strength * 0.0004,
+                  duration: 0.04,
+                  ease: "power4.out",
+                },
+                at,
+              )
+              .to(view, { x: 0, y: 0, rotation: 0, duration: 0.24, ease: "expo.out" }, at + 0.04);
+          }
+        },
+        [],
+        time + 0.08,
+      )
+      .call(() => line.destroy({ children: true }), [], time + 0.32);
+  }
+
+  function cut(texture: PIXI.Texture) {
+    // 一度の連射では衝撃の向きを揃える。
+    impactAngle = Math.random() * Math.PI * 2;
+    // DPRを保った表示領域の寸法を使い、スクロール中の誌面をそのまま切る。
+    width = texture.width / devicePixelRatio;
+    height = texture.height / devicePixelRatio;
+    view.scale.set(1);
+    timeline.clear().pause(0);
+    clear();
+    pieces = [
+      createPiece(
+        [
+          { x: -width / 2, y: -height / 2 },
+          { x: width / 2, y: -height / 2 },
+          { x: width / 2, y: height / 2 },
+          { x: -width / 2, y: height / 2 },
+        ],
+        texture,
+      ),
+    ];
+    for (let index = 0; index < SHOT_COUNT; index++) {
+      const at = index === 0 ? 0 : Math.sqrt((index + Math.random() * 0.8) / SHOT_COUNT) * 1.2;
+      fire(index, at);
+    }
+    // 断面が離れた余韻を残してから、全ての断片を同じ瞬間に消す。
+    timeline.call(clear, [], 2.4);
+    return timeline;
+  }
+
+  function resize(nextWidth: number, nextHeight: number) {
+    // 進行中のポリゴンを全体で拡縮し、リサイズ後の画面へ合わせる。
+    view.scale.set(nextWidth / width, nextHeight / height);
+  }
+
+  return { view, cut, resize };
+}

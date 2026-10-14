@@ -1,0 +1,10 @@
+.canvas-stage {
+  .canvas-host {
+    touch-action: none;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+}

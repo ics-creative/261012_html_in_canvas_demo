@@ -1,0 +1,33 @@
+/* CRTの2方式は文字組みと入力欄の配置を共有し、枠線や背景は各方式で定義する。 */
+:where(.crt-form, .retro-desktop) {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.4;
+
+  label {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: var(--label-gap, 4px);
+    font-weight: bold;
+  }
+
+  .note-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--fields-gap, 20px);
+  }
+
+  input,
+  textarea {
+    width: 100%;
+  }
+
+  textarea {
+    resize: none;
+  }
+}
+
+/* フォームの操作列は、同じ縦位置へ揃える。 */
+:is(.crt-toggle, .crt-submit, .retro-menu, .crt-form button) {
+  display: flex;
+  align-items: center;
+}

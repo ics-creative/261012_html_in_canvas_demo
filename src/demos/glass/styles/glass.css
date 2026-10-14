@@ -1,0 +1,176 @@
+.glass-svg {
+  /* 元の一覧を残し、透明なCanvasのガラス部分だけを上へ重ねる。 */
+  > canvas {
+    pointer-events: none;
+  }
+}
+
+.glass-css {
+  .glass-page {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.glass-page {
+  --gutter: 32px;
+  width: var(--page-width);
+  height: var(--page-height);
+  overflow: hidden;
+  background: var(--paper);
+  line-height: 1.6;
+
+  p {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* 写真を大きく並べ、ガラス越しの輪郭と色の変化を見比べられるようにする。 */
+  .glass-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    align-content: start;
+    gap: 32px;
+    height: 100%;
+    margin: 0;
+    padding: 32px var(--gutter);
+    list-style: none;
+
+    img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+    }
+
+    h3 {
+      margin-block: 16px 8px;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+  }
+
+  @media (width <= 768px) {
+    --gutter: 16px;
+  }
+}
+
+.glass-controls {
+  --glass-height: 96px;
+  --glass-gutter: 32px;
+  /* iOSの高コントラスト用の青を、黒い選択背景へ重ねる。 */
+  --glass-selected: #5cb8ff;
+  --selected-glass: 1;
+  position: absolute;
+  z-index: 2;
+  isolation: isolate;
+  anchor-scope: all;
+  /* 写真と同じ左右余白を取り、スクロールバーの手前へ収める。 */
+  inset: 48px calc(var(--scrollbar-size) + var(--glass-gutter)) auto var(--glass-gutter);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  max-width: 768px;
+  height: var(--glass-height);
+  padding: 2px;
+  overflow: clip;
+  border-radius: calc(var(--glass-height) / 2);
+  /* 屈折した写真へ白い半透明の下地を重ね、文字とアイコンを読みやすくする。 */
+  background: #fff8;
+  /* 3方式の反射を共有し、上下の縁へ光を回してガラスの厚みを見せる。
+     垂直方向だけの内側の影は、丸い縁に沿って左右の中央へ薄くなる。 */
+  box-shadow:
+    inset 0 2px #fff6,
+    inset 0 -2px #fff4,
+    0 4px 16px #0003;
+  color: #000;
+  user-select: none;
+
+  /* 等幅リンクへカプセル形の背景を重ね、GPUの準備中も横移動を合成する。 */
+  &::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    position-anchor: --glass-css;
+    top: anchor(top);
+    left: anchor(left);
+    width: anchor-size(width);
+    height: anchor-size(height);
+    translate: calc(var(--selected-glass) * (100% + 4px));
+    border-radius: calc(var(--glass-height) / 2 - 2px);
+    /* 選択部分を半透明の黒で沈め、青いアイコンと文字を際立たせる。 */
+    background: #0006;
+    box-shadow: inset 0 2px 4px #0002;
+    pointer-events: none;
+    /* 共通の減衰スプリングで、選択位置を少し越えてから収束する。 */
+    transition: translate 0.6s var(--navigation-spring);
+  }
+
+  &:has(a:first-child.active) {
+    --selected-glass: 0;
+  }
+
+  &:has(a:last-child.active) {
+    --selected-glass: 2;
+  }
+
+  /* CSS版は背面ぼかしと薄い白で、写真の色を透かす。 */
+  &.glass-controls-css {
+    background: #fff4;
+    backdrop-filter: blur(12px) saturate(1.4);
+  }
+
+  a {
+    display: flex;
+    /* 大きめのアイコンと小さなラベルを縦に揃え、図形へ視線を集める。 */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+    padding-inline: 8px;
+    border-radius: calc(var(--glass-height) / 2 - 2px);
+    color: inherit;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    /* iOSの選択色を文字とアイコンへ共有する。 */
+    &.active {
+      color: var(--glass-selected);
+    }
+  }
+
+  svg {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    fill: currentColor;
+  }
+
+  /* 方式名を一行で揃え、アイコンの位置を保つ。 */
+  a > span {
+    align-content: center;
+    min-height: 24px;
+    white-space: nowrap;
+  }
+
+  @media (width <= 768px) {
+    --glass-height: 88px;
+    --glass-gutter: 16px;
+
+    /* モバイルでは、ガラスの切り替えボタンの方式名を「Canvas」に縮める。 */
+    .canvas-prefix {
+      display: none;
+    }
+
+    /* 48pxのアイコンを保ち、文字と間隔を狭いセグメントへ合わせる。 */
+    a {
+      gap: 0;
+      padding-inline: 4px;
+      font-size: 16px;
+    }
+  }
+}

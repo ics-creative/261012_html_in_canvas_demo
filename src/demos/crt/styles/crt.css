@@ -1,0 +1,188 @@
+.crt-stage:has(.crt-toggle input:not(:checked)) .crt-glass {
+  display: none;
+}
+
+.crt-toggle {
+  position: absolute;
+  z-index: 4;
+  inset: 40px 52px auto auto;
+  gap: 12px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+
+  input {
+    position: relative;
+    width: 48px;
+    height: 28px;
+    margin: 0;
+    border: 2px solid var(--muted);
+    border-radius: 16px;
+    appearance: none;
+    background: var(--background);
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      border-color 0.2s;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 4px auto auto 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition:
+        translate 0.2s,
+        background-color 0.2s;
+    }
+
+    &:checked {
+      border-color: var(--accent);
+      background: var(--accent);
+
+      &::before {
+        translate: 20px;
+        background: var(--paper);
+      }
+    }
+  }
+
+  @media (width <= 700px) {
+    inset: 24px 24px auto auto;
+  }
+}
+
+.crt-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--paper);
+
+  .crt-input {
+    width: 100%;
+    height: 100%;
+  }
+
+  .crt-output {
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .crt-glass {
+    z-index: 3;
+    pointer-events: none;
+    /* 中央の明るさを保ち、フィルターの上へガラスの縁の陰影を重ねる。 */
+    background:
+      repeating-linear-gradient(0deg, #0001 0 2px, transparent 2px 4px),
+      radial-gradient(ellipse at center, transparent 64%, #0004);
+    box-shadow: inset 0 0 28px #0004;
+  }
+}
+
+.crt-form {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 24px;
+  width: 100%;
+  height: 100%;
+  padding: 40px 52px;
+  color: var(--ink);
+  background: var(--paper);
+  --fields-gap: 36px;
+  --label-gap: 8px;
+
+  h2 {
+    padding-bottom: var(--heading-padding, 20px);
+    border-bottom: 2px solid var(--ink);
+  }
+
+  label {
+    min-width: 0;
+    font-size: 14px;
+  }
+
+  input,
+  textarea {
+    padding: 8px 0 12px;
+    border: 0;
+    border-bottom: 2px solid var(--ink);
+    border-radius: 0;
+    background: var(--paper);
+    caret-color: var(--accent);
+    font-size: 24px;
+
+    &::placeholder {
+      color: var(--muted);
+    }
+
+    &::selection {
+      color: var(--paper);
+      background: var(--accent);
+    }
+  }
+
+  .note-message,
+  textarea {
+    min-height: 0;
+  }
+
+  .crt-submit {
+    gap: 24px;
+  }
+
+  button {
+    justify-content: space-between;
+    gap: 56px;
+    min-height: 56px;
+    padding: 12px 20px;
+    border: 0;
+    border-radius: 0;
+    color: var(--paper);
+    background: var(--accent);
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1.2;
+
+    span {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    &:hover {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+  }
+
+  @media (width <= 1000px) {
+    --heading-size: 64px;
+  }
+
+  @media (width <= 700px) {
+    --heading-size: 48px;
+    --heading-padding: 24px;
+    --fields-gap: 16px;
+    /* 狭い画面ではスイッチと見出しを上下に並べる。 */
+    padding: 80px 24px 32px;
+
+    input,
+    textarea {
+      font-size: 20px;
+    }
+
+    .crt-submit {
+      align-items: start;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+}
