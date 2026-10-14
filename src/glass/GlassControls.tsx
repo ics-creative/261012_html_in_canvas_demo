@@ -11,7 +11,10 @@ export function GlassControls({ ref, css }: { ref: Ref<HTMLElement>; css: boolea
     <nav ref={ref} className={`glass-controls${css ? " glass-controls-css" : ""}`}>
       {/* CSSの公式ロゴと、写真・ペン先のアイコンで描画方式を区別する。 */}
       <NavLink to="/glass-css" style={{ anchorName: "--glass-css" }}>
-        <img src="images/css.svg" alt="" width="48" height="48" />
+        <svg viewBox="0 0 1000 1000">
+          <use href="images/css.svg#bg" />
+          <use href="images/css.svg#fg" />
+        </svg>
         <span>CSS</span>
       </NavLink>
       <NavLink to="/glass" end>

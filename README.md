@@ -39,7 +39,7 @@ Distortionの背景動画は[`public/videos/`](public/videos/)に配置してい
 
 Glassは32件の写真を縦にスクロールできます。「CSS」は通常のDOMと`backdrop-filter`だけで表示します。「HTML in Canvas」と「SVG」はガラス部分だけを端末の解像度で処理し、ガウスぼかしと縁の屈折を合成します。元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
 
-3方式で白い半透明のツールバーを共有し、HTML in Canvas・SVG版は白い下地を濃くして文字の視認性を高めます。黒い半透明の選択背景はCSSのアンカーポジショニングと共通のスプリング曲線で横へ移動します。HTML in Canvas・SVG版は表面の傾きと屈折率から背景の輪郭をレンズ状に曲げます。CSSは公式ロゴの色を保ち、ラベルとほかのアイコンは黒、選択中はiOSの高コントラスト用ブルー（`#5CB8FF`）で表示します。幅768px以下では「HTML in Canvas」を「Canvas」に短縮し、共通ヘッダーとツールバーの表記を揃えます。
+3方式で白い半透明のツールバーを共有し、HTML in Canvas・SVG版は白い下地を濃くして文字の視認性を高めます。黒い半透明の選択背景はCSSのアンカーポジショニングと共通のスプリング曲線で横へ移動します。HTML in Canvas・SVG版は表面の傾きと屈折率から背景の輪郭をレンズ状に曲げます。CSSの公式ロゴも含めてアイコンと文字は黒、選択中はiOSの高コントラスト用ブルー（`#5CB8FF`）で表示します。幅768px以下では「HTML in Canvas」を「Canvas」に短縮し、共通ヘッダーとツールバーの表記を揃えます。
 
 Glass SVGは[modern-screenshot](https://github.com/qq15725/modern-screenshot)で、HTML・CSS・JPEG XLを`foreignObject`入りのSVG画像へ埋め込みます。ガラスの屈折処理と写真一覧は既存版と共有し、スクロール・サイズ変更時に背面画像を更新します。SVG画像自体は操作できないため、一覧の表示と操作は通常のDOMに残し、ガラスだけを透明なCanvasで重ねています。
 
