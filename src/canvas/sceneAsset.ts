@@ -1,8 +1,12 @@
 import * as THREE from "three/webgpu";
 import { onCleanup } from "./lifecycle";
 
-/** 書き出したシーンを読み込み、共有する素材と影を一度だけ解放する。 */
-export async function loadSceneAsset(url: string, signal: AbortSignal) {
+/** シーン素材を読み込み、ページ離脱時にGPU資源を解放する。 */
+export async function loadSceneAsset(
+  url: string,
+  signal: AbortSignal,
+  loader = new THREE.ObjectLoader(),
+) {
   const response = await fetch(url, { signal });
   // HTTPで展開済みのJSONは直接読み、圧縮ファイルを標準APIで展開する。
   const data =
@@ -13,11 +17,9 @@ export async function loadSceneAsset(url: string, signal: AbortSignal) {
       : await response.json();
   // parseAsyncは画像を一枚ずつ待つため、並列で読む標準parseをPromiseに包む。
   const scene = await new Promise<THREE.Object3D>((resolve, reject) => {
-    const manager = new THREE.LoadingManager();
-    manager.onError = (path) => reject(new Error(`シーン素材を読み込めません: ${path}`));
-    new THREE.ObjectLoader(manager)
-      .setResourcePath(THREE.LoaderUtils.extractUrlBase(url))
-      .parse(data, resolve);
+    loader.manager = new THREE.LoadingManager();
+    loader.manager.onError = (path) => reject(new Error(`シーン素材を読み込めません: ${path}`));
+    loader.setResourcePath(THREE.LoaderUtils.extractUrlBase(url)).parse(data, resolve);
   });
   if (!(scene instanceof THREE.Scene)) throw new Error(`シーンではない素材です: ${url}`);
   const resources = new Set<{ dispose(): void }>();

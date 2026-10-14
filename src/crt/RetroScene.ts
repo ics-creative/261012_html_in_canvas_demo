@@ -14,13 +14,20 @@ export async function createRetroScene(
   signal: AbortSignal,
   ready: Promise<void>,
 ) {
+  // モデルに保存された材質を、WebGPU用の材質として直接読み込む。
+  const loader = new THREE.NodeObjectLoader();
+  Object.assign(loader.nodeMaterials, {
+    MeshBasicMaterial: THREE.MeshBasicNodeMaterial,
+    MeshStandardMaterial: THREE.MeshStandardNodeMaterial,
+    MeshPhysicalMaterial: THREE.MeshPhysicalNodeMaterial,
+  });
   const [renderer, scene] = await Promise.all([
     createRenderer(host, signal, canvas),
-    loadSceneAsset("scenes/retro.json.gz", signal),
+    loadSceneAsset("scenes/retro.json.gz", signal, loader),
   ]);
   signal.throwIfAborted();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-  const world = createRetroWorld(renderer, scene, camera, signal);
+  const renderWorld = createRetroWorld(renderer, scene, camera, signal);
   await ready;
   signal.throwIfAborted();
   // 描画と入力を同じCanvasにまとめ、元HTMLのpaintをThree.jsで直接受け取る。
@@ -101,7 +108,7 @@ export async function createRetroScene(
 
   function render() {
     orbit.update();
-    world.render();
+    renderWorld();
   }
   // サイズと曲面の入力領域を揃え、最初のHTML paint後に描画を開始する。
   await painted;
