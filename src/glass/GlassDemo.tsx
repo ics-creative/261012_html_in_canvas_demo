@@ -4,7 +4,7 @@ import type { HitCanvas } from "../canvas/HTMLHitTarget";
 import { createGlassScene } from "./GlassScene";
 import { GlassControlsContext } from "./GlassControls";
 
-// 指定されたJPEG XLを写真一覧へ使う。
+// JPEG XLの写真を、3方式で共通の一覧に使う。
 const photos = [
   { file: "P3335279", title: "Seine at dusk", caption: "Paris / River" },
   { file: "BF_06888", title: "Palace gallery", caption: "France / Interiors" },

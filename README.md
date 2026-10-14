@@ -35,7 +35,7 @@ URLはReact Routerの`HashRouter`で管理します。共通ヘッダーの下�
 
 TransitionsとLaserは縦スクロールに対応し、現在見えている範囲から遷移を開始します。見出しの表示にはCSSの`timeline-trigger`・`animation-trigger`と`sibling-index()`による時間差を使います。
 
-Distortionの背景動画は[`public/videos/`](public/videos/)に配置しています。提供された3本を1920×1080・10bitのAV1 MP4へ変換し、NormandyとLouvreは60fps、Parisは元の30fpsで使用します。音声を外してループ再生し、MP4の索引を先頭へ配置しています。Three.jsの`VideoTexture`を使い、表示中と遷移先だけを再生します。文字はHTML in Canvasで描き、静止時の文字選択を保ちます。
+Distortionの背景動画は[`public/videos/`](public/videos/)のAV1 MP4（1920×1080・10bit）です。NormandyとLouvreは60fps、Parisは30fpsで再生します。音声を外してループ再生し、MP4の索引を先頭へ配置しています。Three.jsの`VideoTexture`を使い、表示中と遷移先だけを再生します。文字はHTML in Canvasで描き、静止時の文字選択を保ちます。
 
 Glassは32件の写真を縦にスクロールできます。「CSS」は通常のDOMと`backdrop-filter`だけで表示します。「HTML in Canvas」と「SVG」はガラス部分だけを端末の解像度で処理し、ガウスぼかしと縁の屈折を合成します。元HTMLの文字選択・右クリックを保ちますが、屈折した縁の操作領域は元HTMLの位置です。
 
@@ -81,7 +81,8 @@ PixiJS 8.22.0のWebGPUバッチやフィルターに残るテクスチャ参照�
 
 ## 素材・参考
 
-写真は提供された20点のJPEG XLを変換せず、[`public/images/photos/`](public/images/photos/)に配置しています。本の木材テクスチャは[Smoked Walnut Veneer — Jenelle van Heerden / Poly Haven](https://polyhaven.com/a/smoked_walnut_veneer)（CC0）です。
+写真は作者の池田がパリで撮影してきたもの。
+本の木材テクスチャは[Smoked Walnut Veneer — Jenelle van Heerden / Poly Haven](https://polyhaven.com/a/smoked_walnut_veneer)（CC0）です。
 
 CSSのアイコンは[CSS-Nextの公式ロゴ](https://github.com/CSS-Next/logo.css)（CC0）のSVGを使用しています。
 

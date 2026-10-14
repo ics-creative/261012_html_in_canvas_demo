@@ -175,7 +175,7 @@ export function createClothPhysics(initialPose: Float32Array) {
         delta.subVectors(b, a);
         const distance = delta.length();
         if (distance < 1e-8) continue;
-        // 伸び量と蓄積した補正量から今回の補正を求め、両端の逆質量で分配する。
+        // 伸び量と蓄積量から制約の補正量を求め、両端の逆質量で分配する。
         const lambda = (-(distance - length) - alpha * constraint.lambda) / (weight + alpha);
         constraint.lambda += lambda;
         a.addScaledVector(delta, (-lambda * a.weight) / distance);
