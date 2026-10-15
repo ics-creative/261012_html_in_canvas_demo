@@ -179,7 +179,7 @@ export async function createBookScene(
     } else if (event.key === "Escape") hitTarget.clear();
   }
 
-  // HTML誌面を描いたフレームを用意してから、Loadingを閉じる。
+  // HTML誌面の初回描画を待ち、本のページへ映す。
   await painted;
   // めくる紙も同じシェーダーを使うため、初回は表示中の見開きだけを描く。
   renderer.render(scene, camera);

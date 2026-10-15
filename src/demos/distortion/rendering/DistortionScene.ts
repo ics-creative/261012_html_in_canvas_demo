@@ -29,7 +29,7 @@ export async function createDistortionScene(
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
   });
-  // 最初の動画のデコードを待ち、Loadingから描画済みの背景へ切り替える。
+  // 最初の動画のデコードを待ち、背景の描画を始める。
   await videos[0].play();
   const { textures, painted } = createCanvasTextures(canvases, renderer);
   const camera = new THREE.PerspectiveCamera(40, 1, 1, 20000);

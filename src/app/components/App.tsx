@@ -24,11 +24,6 @@ window.addEventListener("popstate", (event) => {
   }
 });
 
-// demoクエリー付きのURLを、ハッシュだけのURLへ揃える。
-if (location.search.startsWith("?demo=")) {
-  history.replaceState(history.state, "", location.pathname + location.hash);
-}
-
 // メニューの並び順から連番を付け、表示位置と番号を揃える。
 const demos = [
   ["transition", "Transitions", <PageTransitionDemo />],
@@ -51,11 +46,11 @@ export function App() {
     <>
       <header className="header">
         <h1>HTML in Canvas</h1>
-        <nav style={{ positionAnchor: `--demo-${current[0]}` }}>
+        <nav>
           {demos.map(([id, label], index) => {
             const page = id === "transition" || id === "laser" ? `${id}/01` : id;
             return (
-              <a key={id} href={`#/${page}`} style={{ anchorName: `--demo-${id}` }}>
+              <a key={id} href={`#/${page}`} className={id === current[0] ? "active" : undefined}>
                 <span>{String(index + 1).padStart(2, "0")}</span> {label}
               </a>
             );

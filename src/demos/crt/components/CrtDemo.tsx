@@ -42,7 +42,7 @@ export default function CrtDemo() {
             <h2>POSTCARD</h2>
             <NoteFields />
             <div className="crt-submit">
-              <button type="submit">
+              <button>
                 Save postcard <span>↗</span>
               </button>
               <output>{received ? "Postcard saved." : ""}</output>

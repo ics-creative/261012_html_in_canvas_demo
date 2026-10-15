@@ -34,7 +34,7 @@ export function Crt3dDesktop({ pixelRatio }: { pixelRatio: number }) {
           <NoteFields />
           <footer>
             <output>{saved ? "Note saved." : ""}</output>
-            <button type="submit">Save note</button>
+            <button>Save note</button>
           </footer>
         </div>
       </section>

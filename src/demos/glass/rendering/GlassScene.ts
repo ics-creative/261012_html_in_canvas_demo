@@ -17,7 +17,6 @@ export async function createGlassScene(
 ) {
   const renderer = await createRenderer(host, canvas);
   const source = svg ? page : page.parentElement!;
-  if (svg) renderer.setClearColor(0, 0);
   const viewport = uniform(new THREE.Vector2());
   const size = uniform(new THREE.Vector2());
   const position = uniform(new THREE.Vector2());
@@ -125,7 +124,7 @@ export async function createGlassScene(
       textureSize.copy(viewport.value);
     }
   });
-  // 初回のHTML paintと転送を完了してから、表示の準備完了を通知する。
+  // 初回のHTML paintと転送を待ち、ガラスの屈折を描く。
   await painted;
   requestRender();
 }

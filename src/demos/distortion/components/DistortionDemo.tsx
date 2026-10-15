@@ -28,7 +28,7 @@ const pages = [
   },
 ];
 
-function TextPage({ index, inert = false }: { index: number; inert?: boolean }) {
+function TextPage({ index, inert }: { index: number; inert?: boolean }) {
   return (
     <section className="distortion-type" inert={inert}>
       <h2>{pages[index].title}</h2>

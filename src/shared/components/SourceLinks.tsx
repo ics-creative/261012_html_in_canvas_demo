@@ -5,7 +5,7 @@ export function SourceLinks({
   pages,
   page,
   basePath,
-  hero = false,
+  hero,
 }: {
   pages: readonly { id: string; name: string }[];
   /** 誌面とURLを対応させる識別子。 */

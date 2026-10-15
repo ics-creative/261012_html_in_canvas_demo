@@ -14,7 +14,7 @@
   color: var(--ink);
   background: var(--background);
   color-scheme: light;
-  /* 減衰するスプリング。メニューの背景と押したボタンの戻りに使う。 */
+  /* 減衰するスプリング。ガラスの選択背景と押したボタンの戻りに使う。 */
   /* prettier-ignore */
   --navigation-spring: linear(0, 0.08 4%, 0.28 8%, 0.52 12%, 0.76 16%, 0.94 20%, 1.04 24%, 1.08 32%, 1.04 44%, 1 56%, 0.98 68%, 1 88%, 1);
 }
@@ -111,47 +111,19 @@ canvas {
   }
 
   nav {
-    position: relative;
     min-width: 0;
-    isolation: isolate;
-    anchor-scope: all;
-    scroll-target-group: auto;
     display: flex;
     gap: 4px;
-    padding: 8px 40px;
+    padding-block: 8px;
     overflow-x: auto;
-    /* 横スクロールでも、端のリンクにスプリング用の余白を残す。 */
-    scroll-padding-inline: 40px;
-
-    /* 現在のリンクを基準に、ピルの座標と大きさをCSSだけで追従させる。 */
-    &::after {
-      content: "";
-      /* ピルを固定配置で描き、スプリングの行き過ぎまで表示する。 */
-      position: fixed;
-      z-index: -1;
-      /* 表示中のデモに合わせて、背景が参照するアンカーを切り替える。 */
-      position-anchor: inherit;
-      top: anchor(top);
-      left: anchor(left);
-      width: anchor-size(width);
-      height: anchor-size(height);
-      border-radius: 24px;
-      background: var(--accent);
-      pointer-events: none;
-      transition:
-        left 0.8s var(--navigation-spring),
-        top 0.8s var(--navigation-spring),
-        width 0.8s var(--navigation-spring),
-        height 0.8s var(--navigation-spring);
-    }
   }
 
   a {
-    position: relative;
     display: flex;
     align-items: baseline;
     gap: 8px;
     padding: 12px 16px;
+    border-radius: 24px;
     color: var(--ink);
     font-weight: bold;
     text-decoration: none;
@@ -168,9 +140,10 @@ canvas {
       color: var(--accent);
     }
 
-    /* 描画領域のIDを使い、表示中のデモのリンクを強調する。 */
-    &:target-current {
+    /* 表示中のデモのリンクに背景色を付ける。 */
+    &.active {
       color: var(--paper);
+      background: var(--accent);
 
       span {
         color: inherit;
@@ -195,7 +168,7 @@ canvas {
 .demo-layer {
   position: absolute;
   inset: 0;
-  /* デモ内のUIを一つの描画層へまとめ、Loadingを上に重ねる。 */
+  /* デモ内のUIを一つの描画層へまとめる。 */
   z-index: 0;
   display: grid;
 }
@@ -209,7 +182,7 @@ canvas {
   background: var(--background);
   user-select: none;
 
-  /* 非同期の初期化中は、CSSで円形のリングを回転させる。 */
+  /* デモのコード読み込み中は、CSSで円形のリングを回転させる。 */
   &::after {
     content: "";
     width: 48px;

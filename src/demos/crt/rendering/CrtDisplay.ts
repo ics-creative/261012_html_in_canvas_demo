@@ -51,11 +51,8 @@ export async function createCrtDisplay(
   let cacheDirty = true;
   stage.filters = [glitch, crt];
   stage.filterArea = renderer.screen;
-  for (const filter of filters) {
-    filter.resolution = "inherit";
-    // 中間画像のアンチエイリアスは、元HTMLの文字描画を引き継ぐ。
-    filter.antialias = "off";
-  }
+  // 中間画像は既定のアンチエイリアス設定を使い、元HTMLの文字描画を引き継ぐ。
+  for (const filter of filters) filter.resolution = "inherit";
   renderer.canvas.style.visibility = "hidden";
 
   let time = 0;
@@ -113,7 +110,7 @@ export async function createCrtDisplay(
     cache.resize(renderer.screen.width, renderer.screen.height, devicePixelRatio);
     cached.setSize(renderer.screen.width, renderer.screen.height);
     cacheDirty = true;
-    // 最初のフォームも描画し終えてから、Canvasを表示して準備完了を知らせる。
+    // 最初のフォームを描画してから、Canvasを表示する。
     render();
     renderer.canvas.style.visibility = "visible";
     gsap.ticker.add(tick);
@@ -132,7 +129,7 @@ export async function createCrtDisplay(
 
   function render() {
     if (cacheDirty) {
-      renderer.render({ container: sprite, target: cache, clear: true });
+      renderer.render({ container: sprite, target: cache });
       cacheDirty = false;
     }
     renderer.render(stage);
@@ -182,6 +179,6 @@ export async function createCrtDisplay(
 
   form.addEventListener("input", pulse);
   form.addEventListener("submit", pulse);
-  // フォームを描画してから、画面を切り替える準備完了を知らせる。
+  // フォームの初回描画を待ち、初期化を完了する。
   await capture.painted;
 }

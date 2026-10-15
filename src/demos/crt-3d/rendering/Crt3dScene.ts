@@ -46,7 +46,7 @@ export async function createCrt3dScene(host: HTMLElement, canvas: HitCanvas) {
 
   function hit(event: MouseEvent): HtmlPoint | null {
     // 筐体より手前に見える画面を、入力の対象にする。
-    const point = aim(event).intersectObject<THREE.Mesh>(scene, true)[0];
+    const point = aim(event).intersectObject<THREE.Mesh>(scene)[0];
     if (point?.object !== screen || !point.uv || !point.face) return null;
     return {
       index: 0,

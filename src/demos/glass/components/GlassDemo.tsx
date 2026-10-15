@@ -54,7 +54,7 @@ export default function GlassDemo({ method = "html" }: { method?: "css" | "html"
   );
 }
 
-function Gallery({ ref, zoom = 1 }: { ref: Ref<HTMLElement>; zoom?: number }) {
+function Gallery({ ref, zoom }: { ref: Ref<HTMLElement>; zoom?: number }) {
   return (
     <article ref={ref} className="glass-page" style={{ zoom }}>
       {/* スクロールと文字選択は元HTMLへ任せ、画像化はガラスの背面だけに使う。 */}
